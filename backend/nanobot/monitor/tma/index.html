@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>nanobot Worker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-base: #09090b;
+            --glass-bg: rgba(20, 20, 24, 0.9);
+            --glass-bg-hover: rgba(28, 28, 32, 0.95);
+            --glass-bg-active: rgba(36, 36, 42, 1);
+            --glass-border: rgba(55, 55, 62, 0.5);
+            --glass-border-light: rgba(70, 70, 80, 0.5);
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-dim: #71717a;
+            --accent: #a78bfa;
+            --accent-soft: rgba(167, 139, 250, 0.15);
+            --accent-medium: rgba(167, 139, 250, 0.25);
+            --success: #4ade80;
+            --success-soft: rgba(74, 222, 128, 0.2);
+            --warning: #fbbf24;
+            --error: #f87171;
+            --blur-sm: 12px;
+            --blur-md: 20px;
+            --blur-lg: 28px;
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --radius-full: 999px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header - with space for Telegram close button */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            /* Minimum 56px top padding for Telegram header, plus any extra safe area */
+            padding-top: calc(56px + var(--tg-safe-area-inset-top, 0px));
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-logo {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-island {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-md));
+            -webkit-backdrop-filter: blur(var(--blur-md));
+            padding: 10px 16px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: #8b5cf6;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--bg-base);
+        }
+
+        .status-island {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-md));
+            -webkit-backdrop-filter: blur(var(--blur-md));
+            padding: 10px 14px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--glass-border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success-soft);
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.9); }
+        }
+
+        .status-dot.busy {
+            background: var(--warning);
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            padding: 0 16px 12px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-md));
+            -webkit-backdrop-filter: blur(var(--blur-md));
+            border-radius: var(--radius-full);
+            padding: 5px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s;
+        }
+
+        .tab.active {
+            background: var(--glass-bg-active);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border-light);
+        }
+
+        .tab.active svg {
+            transform: scale(1.1);
+        }
+
+        .tab:not(.active):active {
+            background: var(--glass-bg-hover);
+            transform: scale(0.98);
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            padding: 0 16px 16px;
+            z-index: 10;
+        }
+
+        .panel {
+            position: absolute;
+            top: 0; left: 16px; right: 16px; bottom: 16px;
+            display: none;
+            flex-direction: column;
+        }
+
+        .panel.active { display: flex; }
+
+        /* Glass Card Container */
+        .glass-card {
+            background: var(--glass-bg);
+                        backdrop-filter: blur(var(--blur-lg));
+            -webkit-backdrop-filter: blur(var(--blur-lg));
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--glass-border);
+                        overflow: hidden;
+        }
+
+        /* Terminal Panel */
+        .terminal-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-project {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terminal-project svg {
+            width: 16px;
+            height: 16px;
+            color: var(--accent);
+        }
+
+        .project-name {
+            font-family: 'SF Mono', 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .btn-new-chat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--glass-bg-hover);
+            backdrop-filter: blur(var(--blur-sm));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-new-chat svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .btn-new-chat:active {
+            background: var(--glass-bg-active);
+            transform: scale(0.97);
+        }
+
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px;
+            font-family: 'SF Mono', 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .term-line {
+            margin-bottom: 4px;
+            word-break: break-word;
+            padding: 2px 0;
+            animation: fadeIn 0.2s ease-out;
+            display: flex;
+            gap: 8px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .term-prefix {
+            flex-shrink: 0;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .term-content {
+            flex: 1;
+            white-space: pre-wrap;
+        }
+
+        .term-line.user .term-prefix {
+            color: var(--accent);
+        }
+
+        .term-line.user .term-content {
+            color: var(--text-primary);
+        }
+
+        .term-line.assistant .term-prefix {
+            color: var(--success);
+        }
+
+        .term-line.assistant .term-content {
+            color: var(--text-secondary);
+        }
+
+        .term-line.error .term-prefix {
+            color: var(--error);
+        }
+
+        .term-line.error .term-content {
+            color: var(--error);
+        }
+
+        .term-line.system {
+            color: var(--text-dim);
+            font-style: italic;
+            justify-content: center;
+            padding: 8px 0;
+        }
+
+        .term-line.system .term-content {
+            color: var(--text-dim);
+        }
+
+        /* Claude Code style - tool calls */
+        .tool-call {
+            margin: 4px 0;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .tool-call:last-child {
+            border-bottom: none;
+        }
+
+        .tool-call-header {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-dim);
+            font-size: 12px;
+            line-height: 1.3;
+        }
+
+        .tool-call-header .tool-icon {
+            color: var(--accent);
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .tool-call-header .tool-name {
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-size: 11px;
+        }
+
+        .tool-call-header .tool-status {
+            color: var(--text-dim);
+            font-size: 10px;
+        }
+
+        .tool-call-header .spinner {
+            width: 8px;
+            height: 8px;
+            border: 1.5px solid var(--glass-border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .tool-call-header .checkmark {
+            color: var(--success);
+            font-size: 10px;
+        }
+
+        .tool-call-header .error-mark {
+            color: var(--error);
+            font-size: 10px;
+        }
+
+        .tool-call-content {
+            margin-top: 2px;
+            padding-left: 14px;
+            color: var(--text-dim);
+            font-size: 10px;
+            opacity: 0.6;
+        }
+
+        /* Thinking - dimmed like Claude Code */
+        .term-line.thinking {
+            opacity: 0.6;
+        }
+
+        .term-line.thinking .term-prefix {
+            color: var(--text-dim);
+        }
+
+        .term-line.thinking .term-content {
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        /* Command output */
+        .term-line.output {
+            padding-left: 20px;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+
+        .term-line.output .term-content {
+            color: var(--text-dim);
+        }
+
+        /* Input Area */
+        .terminal-input-container {
+            display: flex;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 1px solid var(--glass-border);
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .terminal-input {
+            width: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-sm));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            padding: 14px 22px;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .terminal-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .terminal-input:focus {
+            border-color: var(--glass-border-light);
+            background: var(--glass-bg-hover);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .terminal-send {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            border: none;
+            border-radius: var(--radius-full);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+        }
+
+        .terminal-send svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .terminal-send:active {
+            transform: scale(0.93);
+        }
+
+        .terminal-send:disabled {
+            opacity: 0.4;
+            box-shadow: none;
+        }
+
+        /* Projects Panel */
+        .projects-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .projects-header {
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .btn-new-project {
+            width: 100%;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            border: none;
+            border-radius: var(--radius-full);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-new-project svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-new-project:active {
+            transform: scale(0.98);
+        }
+
+        .projects-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .project-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            gap: 14px;
+            margin-bottom: 8px;
+            transition: all 0.25s;
+            border: 1px solid transparent;
+            background: var(--glass-bg);
+                    }
+
+        .project-item:active {
+            transform: scale(0.99);
+        }
+
+        .project-item.active {
+            background: var(--accent-soft);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .project-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--glass-bg-hover);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .project-icon svg {
+            width: 22px;
+            height: 22px;
+            color: var(--accent);
+        }
+
+        .project-info { flex: 1; min-width: 0; }
+        .project-title { font-size: 15px; font-weight: 500; }
+        .project-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+
+        .project-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success-soft);
+        }
+
+        /* Files Panel */
+        .files-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .files-header {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--glass-border);
+            gap: 12px;
+        }
+
+        .btn-back {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--glass-bg-hover);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-back svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-back:active {
+            transform: scale(0.95);
+        }
+
+        .btn-back:disabled { opacity: 0.3; }
+
+        .path-display {
+            flex: 1;
+            font-size: 13px;
+            font-family: 'SF Mono', monospace;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .files-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            gap: 14px;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .file-item:active {
+            background: var(--glass-bg-active);
+            transform: scale(0.99);
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--glass-bg-hover);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .file-icon svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+        }
+
+        .file-icon.folder svg {
+            color: var(--warning);
+        }
+
+        .file-info { flex: 1; min-width: 0; }
+        .file-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* Roots grid */
+        .roots-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 14px;
+        }
+
+        .root-card {
+            background: var(--glass-bg);
+                        backdrop-filter: blur(var(--blur-sm));
+            border-radius: var(--radius-lg);
+            padding: 22px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            border: 1px solid var(--glass-border);
+        }
+
+        .root-card:active {
+            background: var(--glass-bg-active);
+            transform: scale(0.97);
+        }
+
+        .root-icon {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 12px;
+            background: var(--glass-bg-hover);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .root-icon svg {
+            width: 26px;
+            height: 26px;
+            color: var(--accent);
+        }
+
+        .root-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* Loading & empty */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--glass-border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            padding: 50px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 72px;
+            height: 72px;
+            margin-bottom: 18px;
+            background: var(--glass-bg-hover);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .empty-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--text-dim);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--glass-bg);
+                        backdrop-filter: blur(var(--blur-lg));
+            -webkit-backdrop-filter: blur(var(--blur-lg));
+            border-radius: var(--radius-xl);
+            padding: 26px;
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid var(--glass-border);
+                        animation: modalIn 0.3s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-title svg {
+            width: 22px;
+            height: 22px;
+            color: var(--accent);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 16px 22px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            color: var(--text-primary);
+            font-size: 15px;
+            margin-bottom: 22px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .modal-input:focus {
+            border-color: var(--glass-border-light);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .modal-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px 18px;
+            border: none;
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .modal-btn.cancel {
+            background: var(--glass-bg-hover);
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .modal-btn.cancel:active {
+            background: var(--glass-bg-active);
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        .modal-btn.confirm:active {
+            transform: scale(0.98);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-md));
+            -webkit-backdrop-filter: blur(var(--blur-md));
+            padding: 14px 24px;
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 200;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast svg {
+            width: 18px;
+            height: 18px;
+            color: var(--success);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Safe area */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .terminal-input-container {
+                padding-bottom: calc(14px + env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border-light);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+
+        /* File Preview Modal */
+        .preview-modal {
+            background: var(--bg-base);
+            border-radius: var(--radius-xl);
+            width: 95%;
+            max-width: 600px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--glass-border);
+                        overflow: hidden;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--glass-bg);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .preview-filename {
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .preview-close {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            background: var(--glass-bg-hover);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .preview-close:active {
+            transform: scale(0.95);
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+            min-height: 200px;
+            max-height: calc(85vh - 60px);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            max-height: calc(85vh - 60px);
+        }
+
+        .preview-pdf {
+            width: 100%;
+            height: calc(85vh - 60px);
+            border: none;
+        }
+
+        .preview-code {
+            padding: 16px;
+            font-family: 'SF Mono', 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-secondary);
+            background: var(--bg-base);
+            margin: 0;
+        }
+
+        .preview-info {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .preview-info-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: var(--glass-bg-hover);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .preview-info-icon svg {
+            width: 28px;
+            height: 28px;
+            color: var(--text-dim);
+        }
+
+        .preview-info-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .preview-info-meta {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        .preview-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="/static/nanobots_tma_logo.png" alt="nanobot" class="header-logo">
+        <div class="status-island">
+            <div class="status-dot" id="statusDot"></div>
+            <span class="status-text" id="statusText">ready</span>
+        </div>
+    </div>
+
+    <div class="tabs-container">
+        <div class="tabs">
+            <div class="tab active" data-tab="terminal">
+                <i data-lucide="message-circle"></i>
+                <span>Chat</span>
+            </div>
+            <div class="tab" data-tab="projects">
+                <i data-lucide="folder-open"></i>
+                <span>Projects</span>
+            </div>
+            <div class="tab" data-tab="files">
+                <i data-lucide="hard-drive"></i>
+                <span>Files</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- Terminal/Chat Panel -->
+        <div class="panel active" id="terminalPanel">
+            <div class="terminal-container glass-card">
+                <div class="terminal-header">
+                    <div class="terminal-project">
+                        <i data-lucide="folder-dot"></i>
+                        <span class="project-name" id="currentProject">No project</span>
+                    </div>
+                    <button class="btn-new-chat" id="btnNewChat">
+                        <i data-lucide="plus"></i>
+                        <span>New Chat</span>
+                    </button>
+                </div>
+                <div class="terminal-output" id="terminalOutput">
+                    <div class="term-line system"><span class="term-content">Worker Agent ready. Ask me anything!</span></div>
+                </div>
+                <div class="terminal-input-container">
+                    <div class="input-wrapper">
+                        <input type="text" class="terminal-input" id="terminalInput" placeholder="Ask Worker Agent..." autocomplete="off" autocapitalize="off">
+                    </div>
+                    <button class="terminal-send" id="terminalSend">
+                        <i data-lucide="arrow-up"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Panel -->
+        <div class="panel" id="projectsPanel">
+            <div class="projects-container glass-card">
+                <div class="projects-header">
+                    <button class="btn-new-project" id="btnNewProject">
+                        <i data-lucide="folder-plus"></i>
+                        <span>New Project</span>
+                    </button>
+                </div>
+                <div class="projects-list" id="projectsList">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files Panel -->
+        <div class="panel" id="filesPanel">
+            <div class="files-container glass-card">
+                <div class="files-header">
+                    <button class="btn-back" id="btnBack" disabled>
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <div class="path-display" id="pathDisplay">Select folder</div>
+                </div>
+                <div class="files-list" id="filesList">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal-overlay" id="newProjectModal">
+        <div class="modal">
+            <div class="modal-title">
+                <i data-lucide="folder-plus"></i>
+                New Project
+            </div>
+            <input type="text" class="modal-input" id="newProjectName" placeholder="Project name...">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="modalCancel">Cancel</button>
+                <button class="modal-btn confirm" id="modalConfirm">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <i data-lucide="check-circle"></i>
+        <span id="toastText"></span>
+    </div>
+
+    <!-- File Preview Modal -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="preview-modal">
+            <div class="preview-header">
+                <div class="preview-filename" id="previewFilename">file.txt</div>
+                <button class="preview-close" id="previewClose">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="preview-content" id="previewContent">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        const API = window.location.origin;
+        let currentProject = null;
+        let messageHistory = [];
+        let currentPath = null;
+        let pathHistory = [];
+
+        // Telegram authentication
+        const tgInitData = window.Telegram?.WebApp?.initData || '';
+        let authError = null;
+
+        /**
+         * Make authenticated API request.
+         * All API calls should use this function.
+         */
+        async function apiRequest(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            };
+
+            // Add Telegram initData for authentication
+            if (tgInitData) {
+                headers['X-Telegram-Init-Data'] = tgInitData;
+            }
+
+            const response = await fetch(`${API}${endpoint}`, {
+                ...options,
+                headers
+            });
+
+            // Handle auth errors
+            if (response.status === 401 || response.status === 403) {
+                const data = await response.json();
+                authError = data.error || 'Authentication failed';
+                showAuthError(authError);
+                throw new Error(authError);
+            }
+
+            return response;
+        }
+
+        /**
+         * Fetch media (images, PDF, etc.) with authentication.
+         * Returns a Blob URL that can be used in img.src or iframe.src
+         */
+        async function fetchMediaUrl(path) {
+            const headers = {};
+            if (tgInitData) {
+                headers['X-Telegram-Init-Data'] = tgInitData;
+            }
+
+            const response = await fetch(`${API}/api/media?path=${encodeURIComponent(path)}`, { headers });
+
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('Authentication failed');
+            }
+
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+        }
+
+        /**
+         * Show authentication error to user.
+         */
+        function showAuthError(message) {
+            const terminalOutput = document.getElementById('terminalOutput');
+            terminalOutput.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon" style="background: rgba(248, 113, 113, 0.2); border-color: rgba(248, 113, 113, 0.3);">
+                        <i data-lucide="shield-x"></i>
+                    </div>
+                    <div style="color: var(--error); font-weight: 500;">Access Denied</div>
+                    <div style="font-size: 13px; margin-top: 8px; color: var(--text-dim);">${escapeHtml(message)}</div>
+                    <div style="font-size: 12px; margin-top: 16px; color: var(--text-dim);">
+                        Contact the bot owner to get access.
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // Disable input
+            document.getElementById('terminalInput').disabled = true;
+            document.getElementById('terminalSend').disabled = true;
+        }
+
+        // Icon map for files
+        const fileIcons = {
+            folder: 'folder',
+            js: 'file-code',
+            ts: 'file-code',
+            py: 'file-code',
+            json: 'file-json',
+            md: 'file-text',
+            txt: 'file-text',
+            html: 'file-code',
+            css: 'file-code',
+            default: 'file'
+        };
+
+        // Root icons
+        const rootIcons = {
+            home: 'home',
+            desktop: 'monitor',
+            documents: 'file-text',
+            downloads: 'download',
+            projects: 'folder-kanban'
+        };
+
+        // Init Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+
+            // Set safe area CSS variables from Telegram API
+            const updateSafeArea = () => {
+                const root = document.documentElement;
+                if (tg.safeAreaInset) {
+                    root.style.setProperty('--tg-safe-area-inset-top', `${tg.safeAreaInset.top}px`);
+                    root.style.setProperty('--tg-safe-area-inset-bottom', `${tg.safeAreaInset.bottom}px`);
+                }
+                if (tg.contentSafeAreaInset) {
+                    root.style.setProperty('--tg-content-safe-area-inset-top', `${tg.contentSafeAreaInset.top}px`);
+                }
+            };
+            updateSafeArea();
+            tg.onEvent('safeAreaChanged', updateSafeArea);
+            tg.onEvent('contentSafeAreaChanged', updateSafeArea);
+
+            // Request fullscreen mode (Telegram 7.7+)
+            if (tg.requestFullscreen) {
+                tg.requestFullscreen();
+            }
+
+            // Disable vertical swipes to prevent accidental closing
+            if (tg.disableVerticalSwipes) {
+                tg.disableVerticalSwipes();
+            }
+
+            // Enable closing confirmation
+            if (tg.enableClosingConfirmation) {
+                tg.enableClosingConfirmation();
+            }
+        }
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
+
+                if (tab.dataset.tab === 'projects') {
+                    loadProjects();
+                } else if (tab.dataset.tab === 'files' && !currentPath) {
+                    loadRoots();
+                }
+            });
+        });
+
+        // Terminal/Chat
+        const terminalInput = document.getElementById('terminalInput');
+        const terminalOutput = document.getElementById('terminalOutput');
+
+        terminalInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                await sendMessage();
+            }
+        });
+
+        document.getElementById('terminalSend').addEventListener('click', sendMessage);
+
+        async function sendMessage() {
+            const message = terminalInput.value.trim();
+            if (!message) return;
+
+            terminalInput.value = '';
+            addTerminalLine('user', message);
+            setStatus('busy', 'thinking...');
+
+            try {
+                const res = await apiRequest('/api/terminal/ai', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        message,
+                        project: currentProject
+                    })
+                });
+
+                const data = await res.json();
+
+                // Handle agent actions if present
+                if (data.actions && Array.isArray(data.actions)) {
+                    for (const action of data.actions) {
+                        if (action.type === 'thinking') {
+                            addTerminalLine('thinking', action.content);
+                        } else {
+                            // All tool actions (command, read, edit, search, tool)
+                            const title = action.tool || action.type;
+                            const status = action.status || 'done';
+                            addToolCall(title, action.content, status);
+                        }
+                    }
+                }
+
+                if (data.response) {
+                    addTerminalLine('assistant', data.response);
+                } else if (data.error) {
+                    addTerminalLine('error', data.error);
+                }
+
+                setStatus('ready', 'done');
+            } catch (e) {
+                addTerminalLine('error', `Error: ${e.message}`);
+                setStatus('ready', 'error');
+            }
+        }
+
+        function addTerminalLine(type, content, meta = {}) {
+            const line = document.createElement('div');
+            line.className = `term-line ${type}`;
+
+            // Claude Code style prefixes
+            const prefixes = {
+                user: '>',
+                assistant: '❯',
+                error: '✗',
+                system: '',
+                thinking: '⋯'
+            };
+
+            if (type !== 'system') {
+                const prefix = document.createElement('span');
+                prefix.className = 'term-prefix';
+                prefix.textContent = prefixes[type] || '>';
+                line.appendChild(prefix);
+            }
+
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'term-content';
+            contentSpan.textContent = content;
+            line.appendChild(contentSpan);
+
+            terminalOutput.appendChild(line);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        // Claude Code style tool call - clean, minimal
+        function addToolCall(toolName, args, status = 'running') {
+            const toolCall = document.createElement('div');
+            toolCall.className = 'tool-call';
+            toolCall.id = `tool-${Date.now()}`;
+
+            const statusIndicator = status === 'running'
+                ? '<span class="spinner"></span>'
+                : '<span class="checkmark">✓</span>';
+
+            toolCall.innerHTML = `
+                <div class="tool-call-header">
+                    <span class="tool-icon">›</span>
+                    <span class="tool-name">${escapeHtml(toolName)}</span>
+                    ${statusIndicator}
+                </div>
+                ${args ? `<div class="tool-call-content">${escapeHtml(args)}</div>` : ''}
+            `;
+
+            terminalOutput.appendChild(toolCall);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+
+            return toolCall.id;
+        }
+
+        // Update tool call status
+        function updateToolCall(toolId, status, result = null) {
+            const tool = document.getElementById(toolId);
+            if (!tool) return;
+
+            const header = tool.querySelector('.tool-call-header');
+            if (header) {
+                const spinner = header.querySelector('.spinner');
+                if (spinner) {
+                    spinner.outerHTML = status === 'done'
+                        ? '<span class="checkmark">✓</span>'
+                        : '<span class="error-mark">✗</span>';
+                }
+            }
+
+            if (result) {
+                let content = tool.querySelector('.tool-call-content');
+                if (!content) {
+                    content = document.createElement('div');
+                    content.className = 'tool-call-content';
+                    tool.appendChild(content);
+                }
+                content.textContent = result;
+            }
+        }
+
+        // Backward compatibility
+        function addAgentAction(actionType, title, content, status = 'running') {
+            return addToolCall(title, content, status);
+        }
+
+        function updateAgentAction(actionId, status, result = null) {
+            updateToolCall(actionId, status, result);
+        }
+
+        function setStatus(state, text) {
+            const dot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            dot.className = 'status-dot' + (state === 'busy' ? ' busy' : '');
+            statusText.textContent = text;
+        }
+
+        // New Chat button
+        document.getElementById('btnNewChat').addEventListener('click', async () => {
+            if (confirm('Start a new chat? Current conversation will be cleared.')) {
+                try {
+                    await apiRequest('/api/terminal/new-chat', { method: 'POST' });
+                    terminalOutput.innerHTML = '<div class="term-line system"><span class="term-content">New chat started. Ask me anything!</span></div>';
+                    showToast('New chat started');
+                } catch (e) {
+                    showToast('Error clearing chat');
+                }
+            }
+        });
+
+        // Projects
+        async function loadProjects() {
+            const list = document.getElementById('projectsList');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const res = await apiRequest('/api/projects');
+                const data = await res.json();
+
+                if (!data.projects || data.projects.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i data-lucide="folder-open"></i>
+                            </div>
+                            <div>No projects yet</div>
+                            <div style="font-size: 13px; margin-top: 8px; color: var(--text-dim)">Create your first project!</div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+
+                let html = '';
+                for (const project of data.projects) {
+                    const isActive = project.name === currentProject;
+                    html += `
+                        <div class="project-item ${isActive ? 'active' : ''}" onclick="selectProject('${escapeAttr(project.name)}')">
+                            <div class="project-icon">
+                                <i data-lucide="folder"></i>
+                            </div>
+                            <div class="project-info">
+                                <div class="project-title">${escapeHtml(project.name)}</div>
+                                <div class="project-meta">${project.files || 0} files</div>
+                            </div>
+                            ${isActive ? '<div class="project-indicator"></div>' : ''}
+                        </div>
+                    `;
+                }
+                list.innerHTML = html;
+                lucide.createIcons();
+            } catch (e) {
+                list.innerHTML = '<div class="empty-state">Failed to load projects</div>';
+            }
+        }
+
+        async function selectProject(name) {
+            try {
+                const res = await apiRequest('/api/projects/select', {
+                    method: 'POST',
+                    body: JSON.stringify({ name })
+                });
+
+                const data = await res.json();
+
+                if (data.ok) {
+                    currentProject = name;
+                    document.getElementById('currentProject').textContent = name;
+
+                    // Load terminal history for this project
+                    const histRes = await apiRequest('/api/terminal/history');
+                    const histData = await histRes.json();
+
+                    if (histData.history && histData.history.length > 0) {
+                        terminalOutput.innerHTML = '';
+                        for (const entry of histData.history) {
+                            addTerminalLine(entry.type, entry.content);
+                        }
+                    } else {
+                        terminalOutput.innerHTML = `<div class="term-line system"><span class="term-content">Project: ${name}. Ask me anything!</span></div>`;
+                    }
+
+                    // Switch to terminal tab
+                    document.querySelector('[data-tab="terminal"]').click();
+
+                    showToast(`Project: ${name}`);
+                    loadProjects();
+                }
+            } catch (e) {
+                showToast('Error selecting project');
+            }
+        }
+
+        // New Project Modal
+        document.getElementById('btnNewProject').addEventListener('click', () => {
+            document.getElementById('newProjectModal').classList.add('show');
+            document.getElementById('newProjectName').value = '';
+            document.getElementById('newProjectName').focus();
+        });
+
+        document.getElementById('modalCancel').addEventListener('click', () => {
+            document.getElementById('newProjectModal').classList.remove('show');
+        });
+
+        document.getElementById('modalConfirm').addEventListener('click', createProject);
+
+        document.getElementById('newProjectName').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') createProject();
+            if (e.key === 'Escape') document.getElementById('newProjectModal').classList.remove('show');
+        });
+
+        async function createProject() {
+            const name = document.getElementById('newProjectName').value.trim();
+            if (!name) return;
+
+            try {
+                const res = await apiRequest('/api/projects/create', {
+                    method: 'POST',
+                    body: JSON.stringify({ name })
+                });
+
+                const data = await res.json();
+
+                if (data.ok) {
+                    document.getElementById('newProjectModal').classList.remove('show');
+                    showToast(`Project "${name}" created`);
+                    selectProject(name);
+                } else {
+                    showToast(data.error || 'Failed to create project');
+                }
+            } catch (e) {
+                showToast('Error creating project');
+            }
+        }
+
+        // Files
+        async function loadRoots() {
+            const list = document.getElementById('filesList');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const res = await apiRequest('/api/roots');
+                const data = await res.json();
+
+                let html = '<div class="roots-grid">';
+                for (const root of data.roots) {
+                    const iconName = rootIcons[root.name?.toLowerCase()] || 'folder';
+                    html += `
+                        <div class="root-card" onclick="navigateTo('${escapeAttr(root.path)}')">
+                            <div class="root-icon">
+                                <i data-lucide="${iconName}"></i>
+                            </div>
+                            <div class="root-name">${escapeHtml(root.name)}</div>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+                list.innerHTML = html;
+                lucide.createIcons();
+
+                document.getElementById('btnBack').disabled = true;
+                document.getElementById('pathDisplay').textContent = 'Select folder';
+                currentPath = null;
+                pathHistory = [];
+            } catch (e) {
+                list.innerHTML = '<div class="empty-state">Failed to load</div>';
+            }
+        }
+
+        async function navigateTo(path) {
+            const list = document.getElementById('filesList');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const res = await apiRequest(`/api/files?path=${encodeURIComponent(path)}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    list.innerHTML = `<div class="empty-state">${data.error}</div>`;
+                    return;
+                }
+
+                if (currentPath) pathHistory.push(currentPath);
+                currentPath = path;
+
+                document.getElementById('btnBack').disabled = false;
+                document.getElementById('pathDisplay').textContent = shortenPath(path);
+
+                let html = '';
+                for (const file of data.files) {
+                    const size = file.size !== null ? formatSize(file.size) : '';
+                    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                    const iconName = file.is_dir ? 'folder' : (fileIcons[ext] || fileIcons.default);
+                    const iconClass = file.is_dir ? 'folder' : '';
+
+                    html += `
+                        <div class="file-item" onclick="${file.is_dir ? `navigateTo('${escapeAttr(file.path)}')` : `openFile('${escapeAttr(file.path)}')`}">
+                            <div class="file-icon ${iconClass}">
+                                <i data-lucide="${iconName}"></i>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">${escapeHtml(file.name)}</div>
+                                <div class="file-meta">${size}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (!data.files.length) {
+                    html = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i data-lucide="folder-open"></i>
+                            </div>
+                            <div>Empty folder</div>
+                        </div>
+                    `;
+                }
+
+                list.innerHTML = html;
+                lucide.createIcons();
+            } catch (e) {
+                list.innerHTML = '<div class="empty-state">Failed to load</div>';
+            }
+        }
+
+        document.getElementById('btnBack').addEventListener('click', () => {
+            if (pathHistory.length) {
+                const prev = pathHistory.pop();
+                currentPath = null;
+                navigateTo(prev);
+                pathHistory.pop();
+            } else {
+                loadRoots();
+            }
+        });
+
+        // File Preview
+        const previewModal = document.getElementById('previewModal');
+        const previewContent = document.getElementById('previewContent');
+        const previewFilename = document.getElementById('previewFilename');
+
+        document.getElementById('previewClose').addEventListener('click', closePreview);
+        previewModal.addEventListener('click', (e) => {
+            if (e.target === previewModal) closePreview();
+        });
+
+        function closePreview() {
+            previewModal.classList.remove('show');
+            previewContent.innerHTML = '';
+        }
+
+        function getFileExt(path) {
+            return path.split('.').pop()?.toLowerCase() || '';
+        }
+
+        const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+        const textExts = ['txt', 'md', 'json', 'js', 'ts', 'py', 'css', 'xml', 'yaml', 'yml', 'sh', 'bat', 'ini', 'cfg', 'conf', 'log', 'csv', 'sql', 'env', 'gitignore', 'dockerfile'];
+
+        async function openFile(path) {
+            const filename = path.split(/[/\\]/).pop();
+            const ext = getFileExt(path);
+
+            previewFilename.textContent = filename;
+            previewContent.innerHTML = '<div class="preview-loading"><div class="spinner"></div></div>';
+            previewModal.classList.add('show');
+            lucide.createIcons();
+
+            // Image preview
+            if (imageExts.includes(ext)) {
+                try {
+                    const blobUrl = await fetchMediaUrl(path);
+                    const img = document.createElement('img');
+                    img.className = 'preview-image';
+                    img.src = blobUrl;
+                    img.onerror = () => {
+                        URL.revokeObjectURL(blobUrl);
+                        previewContent.innerHTML = `
+                            <div class="preview-info">
+                                <div class="preview-info-icon"><i data-lucide="image-off"></i></div>
+                                <div class="preview-info-title">Cannot load image</div>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                    };
+                    previewContent.innerHTML = '';
+                    previewContent.appendChild(img);
+                } catch (e) {
+                    previewContent.innerHTML = `
+                        <div class="preview-info">
+                            <div class="preview-info-icon"><i data-lucide="shield-x"></i></div>
+                            <div class="preview-info-title">Access denied</div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            // PDF preview
+            if (ext === 'pdf') {
+                try {
+                    const blobUrl = await fetchMediaUrl(path);
+                    previewContent.innerHTML = `<iframe class="preview-pdf" src="${blobUrl}"></iframe>`;
+                } catch (e) {
+                    previewContent.innerHTML = `
+                        <div class="preview-info">
+                            <div class="preview-info-icon"><i data-lucide="shield-x"></i></div>
+                            <div class="preview-info-title">Access denied</div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            // HTML preview - render in iframe
+            if (ext === 'html' || ext === 'htm') {
+                try {
+                    const blobUrl = await fetchMediaUrl(path);
+                    previewContent.innerHTML = `<iframe class="preview-pdf" src="${blobUrl}" style="background: white;"></iframe>`;
+                } catch (e) {
+                    previewContent.innerHTML = `
+                        <div class="preview-info">
+                            <div class="preview-info-icon"><i data-lucide="shield-x"></i></div>
+                            <div class="preview-info-title">Access denied</div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            // Text/code preview
+            if (textExts.includes(ext) || ext === '') {
+                try {
+                    const res = await apiRequest(`/api/file?path=${encodeURIComponent(path)}`);
+                    const data = await res.json();
+
+                    if (data.content) {
+                        const pre = document.createElement('pre');
+                        pre.className = 'preview-code';
+                        pre.textContent = data.content;
+                        previewContent.innerHTML = '';
+                        previewContent.appendChild(pre);
+                    } else if (data.message) {
+                        previewContent.innerHTML = `
+                            <div class="preview-info">
+                                <div class="preview-info-icon"><i data-lucide="file-warning"></i></div>
+                                <div class="preview-info-title">${escapeHtml(data.message)}</div>
+                                <div class="preview-info-meta">${formatSize(data.size || 0)}</div>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                    } else if (data.error) {
+                        previewContent.innerHTML = `
+                            <div class="preview-info">
+                                <div class="preview-info-icon"><i data-lucide="alert-circle"></i></div>
+                                <div class="preview-info-title">${escapeHtml(data.error)}</div>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                    }
+                } catch (e) {
+                    previewContent.innerHTML = `
+                        <div class="preview-info">
+                            <div class="preview-info-icon"><i data-lucide="wifi-off"></i></div>
+                            <div class="preview-info-title">Failed to load file</div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            // Other files - show info
+            try {
+                const res = await apiRequest(`/api/file?path=${encodeURIComponent(path)}`);
+                const data = await res.json();
+
+                previewContent.innerHTML = `
+                    <div class="preview-info">
+                        <div class="preview-info-icon"><i data-lucide="file"></i></div>
+                        <div class="preview-info-title">${escapeHtml(filename)}</div>
+                        <div class="preview-info-meta">${formatSize(data.size || 0)} - ${ext.toUpperCase() || 'Unknown'} file</div>
+                    </div>
+                `;
+                lucide.createIcons();
+            } catch (e) {
+                previewContent.innerHTML = `
+                    <div class="preview-info">
+                        <div class="preview-info-icon"><i data-lucide="file"></i></div>
+                        <div class="preview-info-title">${escapeHtml(filename)}</div>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        // Utilities
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(str) {
+            return str.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+        }
+
+        function shortenPath(path) {
+            const parts = path.split(/[/\\]/);
+            if (parts.length <= 3) return path;
+            return '.../' + parts.slice(-2).join('/');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastText').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Load terminal history from server
+        async function loadTerminalHistory() {
+            try {
+                const res = await apiRequest('/api/terminal/history');
+                const data = await res.json();
+
+                if (data.history && data.history.length > 0) {
+                    terminalOutput.innerHTML = '';
+                    for (const entry of data.history) {
+                        if (entry.type === 'action') {
+                            addAgentAction(
+                                entry.actionType || 'command',
+                                entry.title || 'Action',
+                                entry.content,
+                                entry.status || 'done'
+                            );
+                        } else {
+                            addTerminalLine(entry.type, entry.content);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load history');
+            }
+        }
+
+        // Demo: Show sample actions in Claude Code style
+        function showDemoActions() {
+            terminalOutput.innerHTML = '';
+            addTerminalLine('system', 'Worker Agent ready');
+            addTerminalLine('user', 'Create a hello world file');
+            addTerminalLine('thinking', 'I\'ll create a simple hello world file...');
+            addToolCall('Bash', 'echo "Hello World" > hello.txt', 'done');
+            addToolCall('Read', 'hello.txt', 'done');
+            addTerminalLine('assistant', 'Done! Created hello.txt with "Hello World" content.');
+        }
+
+        // Load initial state
+        async function init() {
+            // Check if running outside Telegram (development mode)
+            if (!tgInitData) {
+                console.warn('No Telegram initData - running in development mode');
+                terminalOutput.innerHTML = `
+                    <div class="term-line system">
+                        <span class="term-content">Development mode - no authentication</span>
+                    </div>
+                `;
+            }
+
+            try {
+                const res = await apiRequest('/api/projects/current');
+                const data = await res.json();
+                if (data.name) {
+                    currentProject = data.name;
+                    document.getElementById('currentProject').textContent = data.name;
+                    loadTerminalHistory();
+                } else {
+                    // Show demo actions when no project is loaded
+                    showDemoActions();
+                }
+            } catch (e) {
+                // Auth error already handled by apiRequest
+                if (!authError) {
+                    console.error('Failed to load current project');
+                    // Show demo actions on error/offline
+                    showDemoActions();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

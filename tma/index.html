@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Nanobots</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@latest/fonts/remixicon.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --bg:#0C0C0C; --bg-card:#1A1A1A; --bg-el:#242424;
+            --border:#2A2A2A; --border-hero:#2A2A4A; --border-light:rgba(255,255,255,0.09);
+            --text:#FFF; --text-2:#8A8A8A; --text-3:#525252; --text-4:#3A3A3A;
+            --orange:#FF9F1C; --purple:#7B6CDB; --green:#32D74B; --yellow:#FFB547;
+            --pink:#E87CC5; --cyan:#4DC9F6; --coral:#FF6B6B; --lime:#A3E635;
+            --orange-15:rgba(255,159,28,0.08); --orange-20:rgba(255,159,28,0.12);
+            --purple-12:rgba(123,108,219,0.07); --purple-20:rgba(123,108,219,0.12);
+            --green-15:rgba(50,215,75,0.09); --green-20:rgba(50,215,75,0.12);
+            --yellow-12:rgba(255,181,71,0.07);
+            --pink-12:rgba(232,124,197,0.07); --pink-20:rgba(232,124,197,0.12);
+            --cyan-12:rgba(77,201,246,0.07); --cyan-20:rgba(77,201,246,0.12);
+            --coral-12:rgba(255,107,107,0.07); --coral-20:rgba(255,107,107,0.12);
+            --lime-12:rgba(163,230,53,0.07); --lime-20:rgba(163,230,53,0.12);
+            --w08:rgba(255,255,255,0.03); --w10:rgba(255,255,255,0.06); --w15:rgba(255,255,255,0.09);
+            --w50:rgba(255,255,255,0.3); --w60:rgba(255,255,255,0.38);
+            --overlay:rgba(0,0,0,0.5);
+            --safe-top:var(--tg-safe-area-inset-top,0px);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+        .sora{font-family:'Sora','Inter',sans-serif}
+
+        /* SCREEN */
+        .screen{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+        .screen.hidden{display:none!important}
+        /* Fade at bottom — gradient from bottom edge upward, behind nav */
+        .screen:not(.splash)::after{content:'';position:absolute;bottom:0;left:0;right:0;height:140px;background:linear-gradient(to top,var(--bg) 0%,var(--bg) 20%,rgba(12,12,12,0.6) 50%,transparent 100%);z-index:2;pointer-events:none}
+        .spacer{height:calc(44px + var(--safe-top));flex-shrink:0}
+        .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:120px}
+
+        /* HEADER — transparent, floats over scroll */
+        .hdr{display:flex;align-items:center;gap:20px;padding:4px 24px 16px;background:transparent;position:relative;z-index:10}
+        .hdr-back{width:36px;height:36px;background:var(--bg-card);border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--orange)}
+        .hdr-back svg{width:18px;height:18px}
+        .hdr-back:active{background:var(--bg-el)}
+        .hdr-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.5px}
+        .hdr-meta{font-size:11px;color:var(--text-3)}
+        .hdr-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--green-15);border-radius:6px;flex-shrink:0}
+        .hdr-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+        .hdr-badge-txt{font-size:9px;font-weight:700;color:var(--green);letter-spacing:.5px}
+
+        /* BOTTOM NAV — floats over scroll at bottom */
+        .bnav{padding:8px 24px 24px;position:absolute;bottom:0;left:0;right:0;z-index:10;background:transparent}
+        @supports(padding-bottom:env(safe-area-inset-bottom)){.bnav{padding-bottom:calc(24px + env(safe-area-inset-bottom))}}
+        .bnav-pill{display:flex;height:56px;padding:4px;background:rgba(26,26,26,0.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:16px;border:1px solid rgba(42,42,42,0.5)}
+        .bnav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:12px;cursor:pointer;border:none;background:none;color:var(--text-3)}
+        .bnav-tab svg{width:20px;height:20px}
+        .bnav-tab span{font-size:9px;font-weight:600;letter-spacing:1px}
+        .bnav-tab.active{background:var(--orange-15);color:var(--orange)}
+        .bnav-tab.active span{font-weight:700}
+        .bnav-tab:active{background:var(--bg-el)}
+
+        /* SECTION */
+        .sec-label{font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:1.5px;text-transform:uppercase}
+        .sec-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;letter-spacing:-0.3px}
+        .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.5px}
+        .badge-sm{padding:3px 8px;border-radius:4px}
+        .badge-xs{padding:1px 5px;border-radius:3px;font-size:8px}
+
+        /* BUTTONS */
+        .btn-pri{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 12px;background:var(--orange);border:none;border-radius:6px;color:#0C0C0C;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+        .btn-pri:active{opacity:.9;transform:scale(.97)}
+        .btn-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--text-2)}
+        .btn-icon:active{background:var(--bg-el)}
+
+        /* PROGRESS */
+        .prog-track{width:100%;height:4px;background:var(--w08);border-radius:2px;overflow:hidden}
+        .prog-fill{height:4px;border-radius:2px}
+
+        /* ANIMATIONS */
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes modalin{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes cursor-blink{0%,100%{opacity:1}50%{opacity:0}}
+        .spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
+        .spin-slow{animation:spin 2s linear infinite}
+
+        /* LIGHT BG CONTRAST — black text/icons on bright backgrounds */
+        [style*="--yellow)"] > i,[style*="--yellow)"] > span,[style*="--yellow)"] > div,
+        [style*="--lime)"] > i,[style*="--lime)"] > span,[style*="--lime)"] > div,
+        .dark-content,.dark-content i,.dark-content span,.dark-content div{color:#0C0C0C!important}
+        /* SHIMMER — running text effect for active tasks */
+        @keyframes float1{0%,100%{transform:rotate(30deg) translate(0,0)}50%{transform:rotate(35deg) translate(10px,-15px)}}
+        @keyframes float2{0%,100%{transform:rotate(50deg) translate(0,0)}50%{transform:rotate(45deg) translate(-8px,12px)}}
+        @keyframes float3{0%,100%{transform:scale(1);opacity:.07}50%{transform:scale(1.08);opacity:.1}}
+        @keyframes float4{0%,100%{transform:scale(1);opacity:.05}50%{transform:scale(1.05);opacity:.07}}
+        @keyframes float5{0%,100%{transform:rotate(65deg) translate(0,0)}50%{transform:rotate(60deg) translate(5px,-8px)}}
+        @keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+        .shimmer{background:linear-gradient(90deg,var(--text-3) 0%,var(--text-2) 40%,var(--text) 50%,var(--text-2) 60%,var(--text-3) 100%);background-size:400px 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 2.5s ease-in-out infinite}
+        /* SCROLLBAR */
+        ::-webkit-scrollbar{width:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+
+        /* ====== SPLASH ====== */
+        .splash{justify-content:center;align-items:center;gap:40px;position:relative;overflow:hidden;background:var(--bg)}
+        .splash-shape{position:absolute;pointer-events:none}
+        .splash-logo{display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;z-index:1}
+        .splash-logo img{height:52px;width:auto}
+        .splash-tag{font-size:14px;color:var(--text-3);letter-spacing:.3px;position:relative;z-index:1}
+        .splash-btn{display:flex;align-items:center;gap:8px;padding:14px 32px;background:var(--orange);border:none;border-radius:12px;color:#0C0C0C;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;position:relative;z-index:1;box-shadow:0 4px 24px rgba(255,159,28,.3)}
+        .splash-btn:active{transform:scale(.97)}
+        .splash-ver{font-size:11px;color:var(--border);position:relative;z-index:1}
+
+        /* ====== HUB ====== */
+        .relay-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px}
+        .relay-dot{width:6px;height:6px;border-radius:50%}
+        .relay-dot.ok{background:var(--green);box-shadow:0 0 8px var(--green-20)}
+        .relay-dot.wait{background:var(--orange);animation:blink 1.2s ease-in-out infinite}
+        .relay-txt{font-size:9px;font-weight:700;color:var(--text-3);letter-spacing:1px}
+        .hero{padding:20px 20px 16px;border-radius:16px;border:1px solid var(--border-hero);background:linear-gradient(160deg,#1A1A2E,#16213E 50%,#0F3460);box-shadow:0 8px 32px rgba(0,0,0,.4);position:relative;overflow:hidden}
+        .hero::before{content:'';position:absolute;inset:0;background-image:url('topography.svg');background-size:300px;opacity:0.12;pointer-events:none;filter:invert(1);mix-blend-mode:soft-light}
+        .hero-icon{width:48px;height:48px;background:var(--w10);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .hero-icon i{font-size:24px;color:#fff}
+        .hero-div{width:100%;height:1px;background:var(--w10)}
+        .hero-ag{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--w08);border-radius:8px}
+        .hero-av{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .hero-av i{font-size:12px;color:#fff}
+        .hero-agent-name{font-size:11px;font-weight:600;color:#fff}
+        .hero-agent-task{font-size:10px;color:var(--w60)}
+        .hero-new{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--w15);border:none;border-radius:6px;font-size:10px;font-weight:600;color:#fff;cursor:pointer;font-family:'Inter',sans-serif}
+        .mini{flex:1;padding:16px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border);display:flex;flex-direction:column;gap:12px}
+        .mini-top{display:flex;justify-content:space-between;align-items:center}
+        .mini-icon{width:36px;height:36px;background:var(--bg-el);border-radius:8px;display:flex;align-items:center;justify-content:center}
+        .mini-icon i{font-size:18px;color:var(--text-3)}
+        .mini-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:var(--text-2);letter-spacing:-0.3px}
+        .mini-meta{font-size:11px;color:var(--text-3)}
+        .act-item{display:flex;align-items:start;gap:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px}
+        .act-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .act-icon i{font-size:16px}
+        .act-title{font-size:13px;font-weight:600}
+        .act-desc{font-size:11px;color:var(--text-3)}
+        .act-time{font-size:11px;font-weight:500;color:var(--text-3);flex-shrink:0}
+
+        /* ====== DEVICE ====== */
+        .ag-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;cursor:pointer}
+        .ag-row:active{background:var(--bg-el)}
+        .ag-av{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .ag-av i{font-size:16px;color:#fff}
+        .ag-name{font-size:13px;font-weight:600}
+        .ag-task{font-size:11px;color:var(--text-3)}
+        .bento{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .bento-lg{padding:18px;border-radius:16px;border:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;min-height:172px;background:transparent}
+        .bento-lg i{font-size:26px}
+        .bento-lg .bn{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;letter-spacing:-0.3px}
+        .bento-lg .bm{font-size:11px;color:var(--text-3)}
+        .bento-sm{padding:14px 16px;border-radius:12px;background:transparent;border:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;min-height:80px;height:80px}
+        .bento-sm i{font-size:20px}
+        .bento-sm .bn{font-size:13px;font-weight:600}
+        .bento-sm .bm{font-size:10px;color:var(--text-3)}
+        .drv{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;cursor:pointer}
+        .drv:active{background:var(--bg-el)}
+        .drv-info{flex:1;display:flex;flex-direction:column;gap:4px}
+        .drv-top{display:flex;justify-content:space-between;align-items:center}
+        .drv-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:700}
+        .drv-size{font-size:10px;color:var(--text-3)}
+        .drv-chev i{font-size:16px;color:var(--border)}
+
+        /* ====== CHAT ====== */
+        .chat-hdr{display:flex;align-items:center;gap:14px;padding:4px 24px 10px}
+        .chat-ctx{flex:1;display:flex;flex-direction:column;gap:2px}
+        .chat-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;letter-spacing:-0.5px}
+        .chat-bc{font-size:11px;color:var(--text-3)}
+        .chat-bc .bc-a{color:var(--orange);font-weight:500}
+        .chat-bc .bc-s{color:var(--text-4)}
+        .chat-bc .bc-p{color:var(--text-2);font-weight:500}
+        .chat-div{width:100%;height:1px;background:var(--bg-card);flex-shrink:0}
+        .chat-msgs{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+        .chat-bar{display:flex;align-items:center;gap:10px;padding:10px 20px 28px;flex-shrink:0;position:relative;z-index:10}
+        @supports(padding-bottom:env(safe-area-inset-bottom)){.chat-bar{padding-bottom:calc(28px + env(safe-area-inset-bottom))}}
+        .mode-btn{width:40px;height:40px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);flex-shrink:0}
+        .mode-btn i{font-size:18px}
+        .mode-btn.on{background:var(--orange-20);border-color:var(--orange-15);color:var(--orange)}
+        .mode-btn:active{transform:scale(.93)}
+        .chat-in{flex:1;height:42px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:0 16px;color:var(--text);font-size:14px;outline:none;font-family:'Inter',sans-serif}
+        .chat-in::placeholder{color:var(--text-3)}
+        .chat-in:focus{border-color:rgba(255,159,28,.3)}
+        .send-btn{width:40px;height:40px;background:var(--orange);border:none;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#0C0C0C;flex-shrink:0}
+        .send-btn i{font-size:20px}
+        .send-btn:active{transform:scale(.9)}
+        .send-btn:disabled{opacity:.3}
+        .msg{display:flex;animation:fadein .15s ease-out}
+        .msg-u{justify-content:flex-end}
+        .msg-u .bbl{padding:12px 16px;background:linear-gradient(135deg,#1A1A2E,#16213E);border-radius:16px 16px 4px 16px;border:1px solid var(--border-hero);max-width:85%}
+        .msg-u .bbl-t{font-size:14px;line-height:1.5}
+        .msg-a .bbl{padding:14px 16px;background:var(--bg-card);border-radius:16px 16px 16px 4px;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;max-width:90%}
+        .msg-a-label{display:flex;align-items:center;gap:6px}
+        .msg-a-av{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+        .msg-a-av i{font-size:12px;color:#fff}
+        .msg-a-name{font-size:11px;font-weight:600}
+        .msg-a-time{font-size:10px;color:var(--text-3)}
+        .msg-tool{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-el);border-radius:6px;font-size:12px}
+        .msg-tool i{font-size:14px}
+        .msg-tool-name{font-weight:500;color:var(--text-2)}
+        .msg-txt{font-size:14px;line-height:1.5}
+        .msg-file{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(36,36,36,.5);border-radius:6px}
+        .msg-file i{font-size:14px}
+        .msg-file-n{font-size:13px}
+        .msg-sys{text-align:center;padding:12px 0;font-size:13px;color:var(--text-3);font-style:italic}
+
+        /* ====== SHEETS ====== */
+        .sh-ov{position:fixed;inset:0;background:var(--overlay);display:none;z-index:100}
+        .sh-ov.show{display:flex;align-items:flex-end}
+        .sh{width:100%;background:var(--bg);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;flex-direction:column;animation:modalin .25s ease-out;max-height:85vh}
+        .sh-handle{display:flex;justify-content:center;padding:12px 0 6px}
+        .sh-bar{width:36px;height:4px;background:var(--border);border-radius:2px}
+        .sh-hdr{display:flex;justify-content:space-between;align-items:center;padding:0 24px 14px}
+        .sh-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;letter-spacing:-0.5px}
+        .sh-close{width:30px;height:30px;background:var(--bg-card);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:var(--text-3)}
+        .sh-close i{font-size:16px}
+        .sh-div{width:100%;height:1px;background:var(--border)}
+        .sh-body{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
+        .pill-row{display:flex;gap:8px;padding:0 24px 16px}
+        .pill{flex:1;height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;cursor:pointer}
+        .pill-t{font-size:12px;font-weight:600;flex:1}
+        .pill-arr i{font-size:14px;color:var(--text-3)}
+        .proj-opt{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#141418;border:1px solid var(--border);border-radius:12px;cursor:pointer}
+        .proj-opt.sel{border-color:var(--orange-20)}
+        .proj-opt:active{background:var(--bg-card)}
+        .proj-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .proj-icon i{font-size:18px}
+        .proj-name{font-size:15px;font-weight:600}
+        .proj-meta{font-size:11px;color:var(--text-3)}
+        .proj-new{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 16px;background:var(--orange);border:1px solid var(--orange);border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;color:#0C0C0C}
+        .proj-new:active{opacity:.9}
+
+        /* ====== FILES ====== */
+        .f-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;cursor:pointer}
+        .f-row:active{background:var(--bg-card)}
+        .f-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .f-icon i{font-size:16px}
+        .f-name{font-size:13px;font-weight:600}
+        .f-meta{font-size:10px;color:var(--text-3)}
+        .f-ag{width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:7px;font-weight:700;color:#fff}
+        .f-ags{display:flex;margin-left:auto}
+        .f-ags>*{margin-left:-6px}
+        .f-ags>*:first-child{margin-left:0}
+        .f-ag-c{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;border:2px solid var(--bg)}
+        .browse-all{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 0;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-2)}
+        .browse-all:active{background:var(--bg-el)}
+
+        /* ====== MORE ====== */
+        .set-grp{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+        .set-row{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+        .set-row:not(:last-child){border-bottom:1px solid var(--border)}
+        .set-row:active{background:var(--bg-el)}
+        .set-row i{font-size:18px;flex-shrink:0}
+        .set-row-t{flex:1;font-size:14px;font-weight:500}
+        .set-row-v{font-size:12px;font-weight:500}
+        .set-row-c i{font-size:16px;color:var(--border)}
+
+        /* ====== PROJECT ====== */
+        .ag-chips{display:flex;gap:8px;overflow-x:auto;padding:0 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+        .ag-chips::-webkit-scrollbar{display:none}
+        .ag-chip{display:flex;flex-direction:column;gap:8px;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;flex-shrink:0;width:160px;cursor:pointer}
+        .ag-chip:active{background:var(--bg-el)}
+        .ag-chip-top{display:flex;justify-content:space-between;align-items:center}
+        .ag-chip-av{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+        .ag-chip-av i{font-size:16px}
+        .ag-chip-name{font-size:14px;font-weight:600;margin-top:4px}
+        .ag-chip-role{font-size:11px;font-weight:600}
+        .ag-chip-task{font-size:11px;color:var(--text-3)}
+        .key-row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px}
+
+        /* ====== MODALS ====== */
+        .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100}
+        .modal-ov.show{display:flex}
+        .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:24px;width:90%;max-width:340px;animation:modalin .2s ease-out}
+        .modal-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+        .modal-title i{font-size:20px;color:var(--orange)}
+        .modal-in{width:100%;padding:12px 18px;background:var(--bg);border:1px solid var(--border);border-radius:999px;color:var(--text);font-size:14px;margin-bottom:20px;outline:none;font-family:'Inter',sans-serif}
+        .modal-in:focus{border-color:rgba(255,159,28,.3)}
+        .modal-in::placeholder{color:var(--text-3)}
+        .modal-btns{display:flex;gap:10px}
+        .modal-btn{flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+        .modal-cancel{background:var(--bg-el);color:var(--text-2);border:1px solid var(--border)}
+        .modal-confirm{background:var(--orange);color:#0C0C0C}
+        .modal-confirm:active{transform:scale(.98)}
+
+        /* PREVIEW */
+        .prev-ov{position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100}
+        .prev-ov.show{display:flex}
+        .prev-modal{background:var(--bg);border:1px solid var(--border);border-radius:20px;width:95%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+        .prev-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-card)}
+        .prev-fname{font-family:'SF Mono','JetBrains Mono',monospace;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .prev-close{width:30px;height:30px;border-radius:8px;background:var(--bg-el);border:1px solid var(--border);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .prev-close i{font-size:16px}
+        .prev-body{flex:1;overflow:auto;min-height:200px;max-height:calc(85vh - 60px)}
+        .prev-code{padding:16px;font-family:'SF Mono','JetBrains Mono',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;color:var(--text-2);margin:0}
+
+        /* TOAST */
+        .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg-card);border:1px solid var(--border);padding:12px 20px;border-radius:999px;font-size:14px;font-weight:500;opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:200;display:flex;align-items:center;gap:8px}
+        .toast i{font-size:16px;color:var(--green)}
+        .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+        /* RECONNECT */
+        .recon{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;z-index:90;flex-direction:column;gap:14px}
+        .recon.show{display:flex}
+        .recon .spinner{width:36px;height:36px}
+        .recon-t{color:var(--text-2);font-size:14px}
+    </style>
+</head>
+<body>
+    <!-- SPLASH -->
+    <div class="screen splash" id="splashScreen">
+        <svg class="splash-shape" style="top:-30px;left:-20px;width:200px;height:200px;animation:float1 8s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 8 C55 8 80 45 88 75 C90 82 84 92 76 92 L24 92 C16 92 10 82 12 75 C20 45 45 8 50 8 Z" fill="#FF9F1C" opacity="0.15"/></svg>
+        <div class="splash-shape" style="top:14%;right:10%;width:100px;height:100px;border-radius:50%;background:rgba(123,108,219,.18);animation:float3 6s ease-in-out infinite"></div>
+        <svg class="splash-shape" style="bottom:80px;right:-30px;width:140px;height:140px;animation:float2 10s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 8 C55 8 80 45 88 75 C90 82 84 92 76 92 L24 92 C16 92 10 82 12 75 C20 45 45 8 50 8 Z" fill="#FF9F1C" opacity="0.12"/></svg>
+        <div class="splash-shape" style="bottom:12%;left:-30px;width:150px;height:150px;border-radius:50%;background:rgba(123,108,219,.12);animation:float4 9s ease-in-out infinite"></div>
+        <div class="splash-shape" style="top:55%;left:8%;width:40px;height:40px;border-radius:50%;background:rgba(123,108,219,.14);animation:float5 7s ease-in-out infinite"></div>
+        <svg class="splash-shape" style="top:35%;right:-10px;width:70px;height:70px;animation:float5 7s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 8 C55 8 80 45 88 75 C90 82 84 92 76 92 L24 92 C16 92 10 82 12 75 C20 45 45 8 50 8 Z" fill="#FF9F1C" opacity="0.1"/></svg>
+        <div class="splash-shape" style="bottom:35%;right:15%;width:16px;height:16px;border-radius:50%;background:rgba(255,159,28,.2);animation:float3 5s ease-in-out infinite"></div>
+        <div class="splash-shape" style="top:20%;left:15%;width:10px;height:10px;border-radius:50%;background:rgba(123,108,219,.2);animation:float4 4s ease-in-out infinite"></div>
+        <div class="splash-logo">
+            <img src="nanobots_tma_logo.png" alt="Nanobots">
+            <div class="splash-tag">Multi-agent AI for your devices</div>
+        </div>
+        <button class="splash-btn" id="splashStart"><span>Get Started</span><i class="ri-arrow-right-line"></i></button>
+        <div class="splash-ver">v2.0</div>
+    </div>
+
+    <!-- HUB -->
+    <div class="screen hidden" id="hubScreen">
+        <div class="spacer"></div>
+        <div class="scroll">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0 24px">
+                <img src="nanobots_tma_logo.png" alt="Nanobots" style="height:32px;width:auto">
+                <div class="relay-badge"><div class="relay-dot wait" id="hubRelayDot"></div><span class="relay-txt" id="hubRelayTxt">RELAY</span></div>
+            </div>
+            <div style="padding:24px 24px 0" id="hubHeroWrap"></div>
+            <div style="padding:16px 24px 0;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div class="sec-title sora">Other devices</div>
+                    <div style="font-size:12px;font-weight:500;color:var(--text-3)" id="hubOffCount">2 offline</div>
+                </div>
+                <div style="display:flex;gap:10px" id="hubOtherDevices"></div>
+            </div>
+            <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div class="sec-title sora">Activity</div>
+                    <div class="badge badge-sm" style="background:var(--orange-20);color:var(--orange)">5 today</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px" id="hubActList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEVICE -->
+    <div class="screen hidden" id="deviceScreen">
+        <div class="spacer"></div>
+        <div class="hdr">
+            <button class="hdr-back" id="deviceBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="hdr-title" id="devName">MacBook Pro</div><div class="hdr-meta" id="devMeta">macOS · Online · 8h uptime</div></div>
+            <div class="hdr-badge"><div class="hdr-badge-dot"></div><span class="hdr-badge-txt">ONLINE</span></div>
+        </div>
+        <div class="scroll" style="padding-left:24px;padding-right:24px">
+            <div style="display:flex;flex-direction:column;gap:20px">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title sora">Agents</div><button class="btn-pri"><i class="ri-add-line"></i> New</button></div>
+                    <div style="display:flex;flex-direction:column;gap:6px" id="devAgents"></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px"><div class="sec-title sora">Files</div><div class="bento" id="devFiles"></div></div>
+                <div style="display:flex;flex-direction:column;gap:8px"><div class="sec-title sora">Drives</div><div style="display:flex;flex-direction:column;gap:6px" id="devDrives"></div></div>
+            </div>
+        </div>
+        <div class="bnav"><div class="bnav-pill">
+            <button class="bnav-tab" data-nav="chat"><i class="ri-chat-1-line"></i><span>CHAT</span></button>
+            <button class="bnav-tab active" data-nav="device"><i class="ri-macbook-line"></i><span>DEVICE</span></button>
+            <button class="bnav-tab" data-nav="more"><i class="ri-settings-3-line"></i><span>MORE</span></button>
+        </div></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="screen hidden" id="chatScreen">
+        <div class="spacer"></div>
+        <div class="chat-hdr">
+            <button class="hdr-back" id="chatBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div class="chat-ctx" style="flex:1"><div class="chat-title">Chat</div><div class="chat-bc"><span id="chatBcDev">MacBook Pro</span><span class="bc-s">  ›  </span><span class="bc-a" id="chatBcAg">Agent #1</span><span class="bc-s">  ›  </span><span class="bc-p" id="chatBcPr">my-webapp</span></div></div>
+            <button class="btn-icon" id="chatSwitch" style="border:1px solid var(--border)"><i class="ri-repeat-line" style="color:var(--text-2)"></i></button>
+        </div>
+        <div class="chat-div"></div>
+        <div class="chat-msgs" id="chatMsgs"><div class="msg-sys">Select a device to begin.</div></div>
+        <div class="chat-bar">
+            <button class="mode-btn" id="chatMode"><i class="ri-terminal-box-line"></i></button>
+            <input type="text" class="chat-in" id="chatIn" placeholder="Ask anything..." autocomplete="off" autocapitalize="off">
+            <button class="send-btn" id="chatSend"><i class="ri-arrow-up-line"></i></button>
+        </div>
+    </div>
+
+    <!-- MORE -->
+    <div class="screen hidden" id="moreScreen">
+        <div class="spacer"></div>
+        <div class="hdr">
+            <button class="hdr-back" id="moreBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="hdr-title">MacBook Pro</div><div class="hdr-meta">macOS · Online · 8h uptime</div></div>
+            <div class="hdr-badge"><div class="hdr-badge-dot"></div><span class="hdr-badge-txt">ONLINE</span></div>
+        </div>
+        <div class="scroll" style="padding-left:24px;padding-right:24px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <div class="sora" style="font-size:28px;font-weight:700;letter-spacing:-1px;padding:20px 0 0">More</div>
+                <div class="sec-label">WORKSPACE</div>
+                <div class="set-grp">
+                    <div class="set-row"><i class="ri-layout-grid-line" style="color:var(--orange)"></i><span class="set-row-t">Projects</span><span class="badge-xs" style="background:var(--orange-20);color:var(--orange)">3</span><span class="set-row-c"><i class="ri-arrow-right-s-line"></i></span></div>
+                    <div class="set-row"><i class="ri-time-line" style="color:var(--purple)"></i><span class="set-row-t">Scheduled Tasks</span><span class="set-row-c"><i class="ri-arrow-right-s-line"></i></span></div>
+                    <div class="set-row"><i class="ri-sparkling-2-line" style="color:var(--yellow)"></i><span class="set-row-t">Agent Memory</span><span class="set-row-c"><i class="ri-arrow-right-s-line"></i></span></div>
+                </div>
+                <div class="sec-label">SYSTEM</div>
+                <div class="set-grp">
+                    <div class="set-row"><i class="ri-wifi-line" style="color:var(--green)"></i><span class="set-row-t">Relay Connection</span><span class="set-row-v" style="color:var(--green)">Active</span></div>
+                    <div class="set-row"><i class="ri-cpu-line" style="color:var(--text-2)"></i><span class="set-row-t">AI Provider</span><span class="set-row-v" style="color:var(--text-2)">Anthropic</span></div>
+                    <div class="set-row"><i class="ri-information-line" style="color:var(--text-2)"></i><span class="set-row-t">About Nanobots</span><span class="set-row-c"><i class="ri-arrow-right-s-line"></i></span></div>
+                </div>
+            </div>
+        </div>
+        <div class="bnav"><div class="bnav-pill">
+            <button class="bnav-tab" data-nav="chat"><i class="ri-chat-1-line"></i><span>CHAT</span></button>
+            <button class="bnav-tab" data-nav="device"><i class="ri-macbook-line"></i><span>DEVICE</span></button>
+            <button class="bnav-tab active" data-nav="more"><i class="ri-settings-3-line"></i><span>MORE</span></button>
+        </div></div>
+    </div>
+
+    <!-- FILE LIST -->
+    <div class="screen hidden" id="fileListScreen">
+        <div class="spacer"></div>
+        <div class="hdr">
+            <button class="hdr-back" id="flBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="hdr-title sora" style="font-size:18px" id="flPath">~/Desktop</div><div class="hdr-meta" id="flMeta">12 items · MacBook Pro</div></div>
+        </div>
+        <div class="scroll" style="padding-left:24px;padding-right:24px"><div style="display:flex;flex-direction:column;gap:2px" id="flItems"></div></div>
+        <div class="bnav"><div class="bnav-pill">
+            <button class="bnav-tab" data-nav="chat"><i class="ri-chat-1-line"></i><span>CHAT</span></button>
+            <button class="bnav-tab active" data-nav="device"><i class="ri-macbook-line"></i><span>DEVICE</span></button>
+            <button class="bnav-tab" data-nav="more"><i class="ri-settings-3-line"></i><span>MORE</span></button>
+        </div></div>
+    </div>
+
+    <!-- PROJECT -->
+    <div class="screen hidden" id="projectScreen">
+        <div class="spacer"></div>
+        <div style="display:flex;align-items:center;gap:20px;padding:4px 24px 12px">
+            <button class="hdr-back" id="projBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="hdr-title" id="projName">my-webapp</div><div class="hdr-meta" id="projMeta">MacBook Pro · 24 files · 2.4 GB</div></div>
+            <button class="btn-icon" id="projHistory" style="border:1px solid var(--border)"><i class="ri-history-line" style="color:var(--text-2)"></i></button>
+        </div>
+        <div class="ag-chips" id="projAgentChips"></div>
+        <div class="scroll" style="padding-left:24px;padding-right:24px;padding-top:16px">
+            <div style="display:flex;flex-direction:column;gap:16px">
+                <div class="sec-label" style="color:var(--text)">KEY FILES</div>
+                <div style="display:flex;flex-direction:column;gap:6px" id="projKeyFiles"></div>
+                <div class="sec-label">FILES</div>
+                <div style="display:flex;flex-direction:column;gap:2px" id="projFiles"></div>
+                <div class="browse-all" id="projBrowseAll"><i class="ri-folder-open-line"></i><span>Browse all 24 files</span><i class="ri-arrow-right-s-line"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SWITCH CONTEXT SHEET -->
+    <div class="sh-ov" id="switchSheet"><div class="sh"><div class="sh-handle"><div class="sh-bar"></div></div>
+        <div class="sh-hdr"><div class="sh-title">Switch Context</div><button class="sh-close" id="switchClose"><i class="ri-close-line"></i></button></div>
+        <div class="pill-row">
+            <div class="pill"><i class="ri-macbook-line"></i><span class="pill-t" id="pillDev">MacBook Pro</span><span class="pill-arr"><i class="ri-arrow-down-s-line"></i></span></div>
+            <div class="pill"><div style="width:20px;height:20px;background:var(--orange);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><span class="pill-t" id="pillAg">Agent #1</span><span class="pill-arr"><i class="ri-arrow-down-s-line"></i></span></div>
+        </div>
+        <div class="sh-div"></div>
+        <div class="sh-body" id="switchProjects"><div class="sec-label">PROJECTS</div></div>
+    </div></div>
+
+    <!-- RECENT CHANGES SHEET -->
+    <div class="sh-ov" id="rcSheet"><div class="sh"><div class="sh-handle"><div class="sh-bar"></div></div>
+        <div class="sh-hdr"><div class="sh-title">Recent Changes</div><button class="sh-close" id="rcClose"><i class="ri-close-line"></i></button></div>
+        <div class="sh-div"></div>
+        <div class="sh-body" id="rcList"></div>
+    </div></div>
+
+    <!-- NEW PROJECT MODAL -->
+    <div class="modal-ov" id="newProjModal"><div class="modal"><div class="modal-title"><i class="ri-folder-line"></i> New Project</div>
+        <input type="text" class="modal-in" id="newProjName" placeholder="Project name...">
+        <div class="modal-btns"><button class="modal-btn modal-cancel" id="modalCancel">Cancel</button><button class="modal-btn modal-confirm" id="modalConfirm">Create</button></div>
+    </div></div>
+
+    <!-- FILE PREVIEW -->
+    <div class="prev-ov" id="prevModal"><div class="prev-modal"><div class="prev-hdr"><div class="prev-fname" id="prevFname">file.txt</div><button class="prev-close" id="prevClose"><i class="ri-close-line"></i></button></div><div class="prev-body" id="prevBody"></div></div></div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"><i class="ri-checkbox-circle-line"></i><span id="toastTxt"></span></div>
+
+    <!-- RECONNECT -->
+    <div class="recon" id="reconOv"><div class="spinner"></div><div class="recon-t">Reconnecting...</div></div>
+
+    <script>
+    // TG WebApp
+    const tg=window.Telegram?.WebApp;
+    if(tg){tg.ready();tg.expand();
+        const u=()=>{const r=document.documentElement;if(tg.safeAreaInset){r.style.setProperty('--tg-safe-area-inset-top',tg.safeAreaInset.top+'px');r.style.setProperty('--tg-safe-area-inset-bottom',tg.safeAreaInset.bottom+'px');}if(tg.contentSafeAreaInset)r.style.setProperty('--tg-content-safe-area-inset-top',tg.contentSafeAreaInset.top+'px');};
+        u();tg.onEvent('safeAreaChanged',u);tg.onEvent('contentSafeAreaChanged',u);
+        try{tg.requestFullscreen?.();}catch(e){}
+        try{tg.disableVerticalSwipes?.();}catch(e){}
+        try{tg.enableClosingConfirmation?.();}catch(e){}
+    }
+
+    // NAV
+    const S={splash:'splashScreen',hub:'hubScreen',device:'deviceScreen',chat:'chatScreen',more:'moreScreen',fl:'fileListScreen',project:'projectScreen'};
+    function go(n){Object.values(S).forEach(id=>document.getElementById(id).classList.add('hidden'));document.getElementById(S[n]).classList.remove('hidden');}
+
+    document.getElementById('splashStart').onclick=()=>go('hub');
+    document.getElementById('deviceBack').onclick=()=>go('hub');
+    document.getElementById('chatBack').onclick=()=>go('device');
+    document.getElementById('moreBack').onclick=()=>go('hub');
+    document.getElementById('flBack').onclick=()=>go('device');
+    document.getElementById('projBack').onclick=()=>go('device');
+    document.getElementById('projHistory').onclick=()=>document.getElementById('rcSheet').classList.add('show');
+    document.getElementById('projBrowseAll').onclick=()=>go('fl');
+
+    document.querySelectorAll('.bnav-tab').forEach(t=>t.onclick=()=>{
+        const n=t.dataset.nav;if(n==='chat')go('chat');else if(n==='device')go('device');else if(n==='more')go('more');
+    });
+
+    // SHEETS
+    const switchSheet=document.getElementById('switchSheet');
+    document.getElementById('chatSwitch').onclick=()=>switchSheet.classList.add('show');
+    document.getElementById('switchClose').onclick=()=>switchSheet.classList.remove('show');
+    switchSheet.onclick=e=>{if(e.target===switchSheet)switchSheet.classList.remove('show');};
+    const rcSheet=document.getElementById('rcSheet');
+    document.getElementById('rcClose').onclick=()=>rcSheet.classList.remove('show');
+    rcSheet.onclick=e=>{if(e.target===rcSheet)rcSheet.classList.remove('show');};
+
+    // CHAT
+    let shellMode=false;
+    document.getElementById('chatMode').onclick=()=>{shellMode=!shellMode;document.getElementById('chatMode').classList.toggle('on',shellMode);document.getElementById('chatIn').placeholder=shellMode?'Enter shell command...':'Ask anything...';};
+    document.getElementById('chatIn').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}};
+    document.getElementById('chatSend').onclick=sendMsg;
+    function sendMsg(){
+        const inp=document.getElementById('chatIn'),t=inp.value.trim();if(!t)return;inp.value='';
+        const m=document.getElementById('chatMsgs');
+        if(shellMode){m.innerHTML+=`<div class="msg" style="display:flex;gap:8px;padding:6px 12px;background:rgba(255,159,28,.04);border-radius:10px;border:1px solid rgba(255,159,28,.08)"><span style="color:var(--orange);font-family:monospace;font-weight:600">$ </span><span style="color:var(--orange);font-family:monospace;font-size:13px">${esc(t)}</span></div>`;}
+        else{m.innerHTML+=`<div class="msg msg-u"><div class="bbl"><div class="bbl-t">${esc(t)}</div></div></div>`;}
+        m.scrollTop=m.scrollHeight;
+    }
+
+    // MODALS
+    document.getElementById('modalCancel').onclick=()=>document.getElementById('newProjModal').classList.remove('show');
+    document.getElementById('prevClose').onclick=()=>document.getElementById('prevModal').classList.remove('show');
+    document.getElementById('prevModal').onclick=e=>{if(e.target===document.getElementById('prevModal'))document.getElementById('prevModal').classList.remove('show');};
+
+    // TOAST & UTILS
+    function toast(msg){const t=document.getElementById('toast');document.getElementById('toastTxt').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+    function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+
+    // ===== MOCK DATA =====
+    function populateMock(){
+        // HUB: Hero card
+        document.getElementById('hubHeroWrap').innerHTML=`<div class="hero" style="display:flex;flex-direction:column;gap:14px;cursor:pointer" onclick="go('device')"><div style="display:flex;justify-content:space-between;align-items:start"><div style="display:flex;flex-direction:column;gap:4px"><div class="badge badge-sm" style="background:var(--green-20);color:var(--green);align-self:start"><div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div> ONLINE</div><div class="sora" style="font-size:22px;font-weight:700;letter-spacing:-0.5px">MacBook Pro</div><div style="font-size:12px;color:var(--text-2)">macOS · Apple M2 · 8h uptime</div></div><div class="hero-icon"><i class="ri-macbook-line"></i></div></div><div class="hero-div"></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:11px;font-weight:600;color:var(--w60)">3 agents running</div><button class="hero-new"><i class="ri-add-line"></i> New</button></div><div style="display:flex;flex-direction:column;gap:6px"><div class="hero-ag"><div class="hero-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #1 · my-webapp</div><div class="hero-agent-task shimmer">Refactoring auth module...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div></div><div class="hero-ag"><div class="hero-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #2 · api-server</div><div class="hero-agent-task">Waiting for input</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div></div><div class="hero-ag"><div class="hero-av dark-content" style="background:var(--yellow);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #3 · ml-pipeline</div><div class="hero-agent-task shimmer">Training model...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div></div></div></div>`;
+
+        // HUB: Other devices
+        document.getElementById('hubOtherDevices').innerHTML=`<div class="mini"><div class="mini-top"><div class="mini-icon"><i class="ri-computer-line"></i></div><div style="width:8px;height:8px;border-radius:50%;background:var(--border)"></div></div><div class="mini-name">Desktop PC</div><div class="mini-meta">Windows · 2h ago</div></div><div class="mini"><div class="mini-top"><div class="mini-icon"><i class="ri-computer-line"></i></div><div style="width:8px;height:8px;border-radius:50%;background:var(--border)"></div></div><div class="mini-name">Work Laptop</div><div class="mini-meta">Linux · 5d ago</div></div>`;
+
+        // HUB: Activity
+        document.getElementById('hubActList').innerHTML=`<div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-loader-4-line spin-slow" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Running tests</div><div class="act-desc">Agent #1 · my-webapp · pytest</div></div><div class="act-time" style="color:var(--orange)">now</div></div><div class="act-item"><div class="act-icon" style="background:var(--green-15)"><i class="ri-check-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Deploy completed</div><div class="act-desc">Agent #1 · my-webapp · npm run build</div></div><div class="act-time">5m</div></div><div class="act-item"><div class="act-icon" style="background:var(--green-15)"><i class="ri-check-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Fixed login bug #42</div><div class="act-desc">Agent #2 · api-server · 3 files changed</div></div><div class="act-time">18m</div></div><div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-loader-4-line spin-slow" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Training model epoch 4/10</div><div class="act-desc">Agent #3 · ml-pipeline · GPU 87%</div></div><div class="act-time" style="color:var(--orange)">now</div></div>`;
+
+        // DEVICE: Agents
+        document.getElementById('devAgents').innerHTML=`<div class="ag-row" onclick="go('chat')"><div class="ag-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="ag-name">Agent #1 · my-webapp</div><div class="ag-task shimmer">Refactoring auth module...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="ag-row" onclick="go('chat')"><div class="ag-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="ag-name">Agent #2 · api-server</div><div class="ag-task">Waiting for input</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div>`;
+
+        // DEVICE: Files bento
+        document.getElementById('devFiles').innerHTML=`<div style="display:flex;gap:10px;grid-column:1/-1"><div class="bento-lg" style="width:50%"><i class="ri-layout-grid-line" style="color:var(--orange)"></i><div style="display:flex;flex-direction:column;gap:3px"><div class="bn">Projects</div><div class="bm">6 items · 890 MB</div></div></div><div style="display:flex;flex-direction:column;gap:10px;width:50%"><div class="bento-sm"><i class="ri-computer-line" style="color:var(--coral)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Desktop</div><div class="bm">12 · 2.4 GB</div></div></div><div class="bento-sm"><i class="ri-file-text-line" style="color:var(--purple)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Documents</div><div class="bm">48 · 12.8 GB</div></div></div></div></div><div style="display:flex;gap:10px;grid-column:1/-1"><div class="bento-sm" style="flex:1"><i class="ri-download-2-line" style="color:var(--green)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Downloads</div><div class="bm">23 · 5.1 GB</div></div></div><div class="bento-sm" style="flex:1"><i class="ri-sparkling-2-line" style="color:var(--cyan)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Skills</div><div class="bm">8 skills</div></div></div></div>`;
+
+        // DEVICE: Drives
+        document.getElementById('devDrives').innerHTML=`<div class="drv" style="border-color:var(--purple-20)"><div class="drv-info"><div class="drv-top"><div style="display:flex;align-items:center;gap:5px"><span class="drv-name">Macintosh HD</span><span class="badge-xs" style="background:var(--purple-20);color:var(--purple)">OS</span></div><span class="drv-size">380 / 500 GB</span></div><div class="prog-track"><div class="prog-fill" style="width:76%;background:var(--purple)"></div></div></div><div class="drv-chev"><i class="ri-arrow-right-s-line"></i></div></div><div class="drv"><div class="drv-info"><div class="drv-top"><span class="drv-name">External SSD</span><span class="drv-size">180 / 1 TB</span></div><div class="prog-track"><div class="prog-fill" style="width:18%;background:var(--green)"></div></div></div><div class="drv-chev"><i class="ri-arrow-right-s-line"></i></div></div><div class="drv" style="border-color:var(--orange-20)"><div class="drv-info"><div class="drv-top"><span class="drv-name" style="color:var(--orange)">Time Machine</span><span class="drv-size" style="color:var(--orange)">460 / 512 GB</span></div><div class="prog-track"><div class="prog-fill" style="width:90%;background:var(--orange)"></div></div></div><div class="drv-chev"><i class="ri-arrow-right-s-line" style="color:var(--orange-20)"></i></div></div>`;
+
+        // FILE LIST
+        document.getElementById('flItems').innerHTML=`<div class="f-row"><div class="f-icon" style="background:var(--orange-20)"><i class="ri-folder-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">project-alpha</div><div class="f-meta">Folder · 8 items</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--purple-12)"><i class="ri-file-text-line" style="color:var(--purple)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">notes.md</div><div class="f-meta">2.0 KB · Modified today</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--green-15)"><i class="ri-file-code-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">script.py</div><div class="f-meta">512 B · Modified yesterday</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--yellow-12)"><i class="ri-image-line" style="color:var(--yellow)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">photo.png</div><div class="f-meta">1.0 MB · Modified 2 days ago</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--w08)"><i class="ri-file-text-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">data.csv</div><div class="f-meta">4.0 KB · Modified 3 days ago</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div>`;
+
+        // SWITCH CONTEXT: projects
+        document.getElementById('switchProjects').innerHTML=`<div class="sec-label">PROJECTS</div><div class="proj-opt sel"><div class="proj-icon" style="background:var(--orange-20)"><i class="ri-folder-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="proj-name">my-webapp</div><div class="proj-meta">Last active 2m ago</div></div><i class="ri-check-line" style="color:var(--orange)"></i></div><div class="proj-opt"><div class="proj-icon" style="background:var(--w08)"><i class="ri-folder-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="proj-name" style="color:var(--text-2)">api-server</div><div class="proj-meta">Last active 18m ago</div></div></div><div class="proj-opt"><div class="proj-icon" style="background:var(--w08)"><i class="ri-folder-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="proj-name" style="color:var(--text-2)">ml-pipeline</div><div class="proj-meta">Last active 2h ago</div></div></div><div class="proj-opt"><div class="proj-icon" style="background:var(--w08)"><i class="ri-forbid-line" style="color:var(--text-3)"></i></div><div style="flex:1"><div class="proj-name" style="color:var(--text-3)">No project</div></div></div><div class="proj-new"><i class="ri-add-line"></i> New project</div>`;
+
+        // RECENT CHANGES
+        document.getElementById('rcList').innerHTML=`<div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-file-code-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">src/auth.ts</div><div class="act-desc">Agent #1 · Frontend · Modified</div></div><div class="act-time" style="color:var(--orange)">2m</div></div><div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-file-code-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">src/components/Login.tsx</div><div class="act-desc">Agent #1 · Frontend · Created</div></div><div class="act-time">5m</div></div><div class="act-item"><div class="act-icon" style="background:var(--purple-12)"><i class="ri-file-code-line" style="color:var(--purple)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">tests/auth.test.ts</div><div class="act-desc">Agent #3 · Testing · Modified</div></div><div class="act-time">8m</div></div><div class="act-item"><div class="act-icon" style="background:var(--yellow-12)"><i class="ri-file-code-line" style="color:var(--yellow)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">src/api/routes.ts</div><div class="act-desc">Agent #5 · Backend · Modified</div></div><div class="act-time">12m</div></div><div class="act-item"><div class="act-icon" style="background:var(--green-15)"><i class="ri-file-text-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">ARCHITECTURE.md</div><div class="act-desc">Agent #1 · Frontend · Updated</div></div><div class="act-time">18m</div></div>`;
+
+        // PROJECT: Agent chips
+        document.getElementById('projAgentChips').innerHTML=`<div class="ag-chip" style="border-color:var(--orange-20)" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 4px var(--orange)"></div></div><div class="ag-chip-name">Agent #1</div><div class="ag-chip-role" style="color:var(--orange)">Frontend</div><div class="ag-chip-task shimmer">Editing auth UI...</div></div><div class="ag-chip" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div></div><div class="ag-chip-name">Agent #3</div><div class="ag-chip-role" style="color:var(--purple)">Testing</div><div class="ag-chip-task">Writing unit tests</div></div><div class="ag-chip" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av dark-content" style="background:var(--yellow);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 4px var(--orange)"></div></div><div class="ag-chip-name">Agent #5</div><div class="ag-chip-role" style="color:var(--yellow)">Backend</div><div class="ag-chip-task shimmer">API endpoints...</div></div>`;
+
+        // PROJECT: Key files
+        document.getElementById('projKeyFiles').innerHTML=`<div class="key-row"><div class="f-icon" style="background:var(--orange-20)"><i class="ri-file-text-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="f-name">ARCHITECTURE.md</div><div class="f-meta">Shared context · 4.2 KB</div></div><div class="f-ags"><div class="f-ag-c" style="background:var(--orange);color:#0C0C0C">1</div><div class="f-ag-c" style="background:var(--purple)">3</div></div></div><div class="key-row"><div class="f-icon" style="background:var(--yellow-12)"><i class="ri-file-code-line" style="color:var(--yellow)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="f-name">.env</div><div class="f-meta">Config · 312 B</div></div></div>`;
+
+        // PROJECT: Regular files
+        document.getElementById('projFiles').innerHTML=`<div class="f-row"><div class="f-icon" style="background:var(--orange-20)"><i class="ri-folder-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">src/</div><div class="f-meta">Source code</div></div><div class="f-ag" style="background:var(--orange);color:#0C0C0C">1</div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--purple-12)"><i class="ri-folder-line" style="color:var(--purple)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">tests/</div><div class="f-meta">Test files</div></div><div class="f-ag" style="background:var(--purple)">3</div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--w08)"><i class="ri-file-code-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">package.json</div><div class="f-meta">Config</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--w08)"><i class="ri-file-text-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">README.md</div><div class="f-meta">Documentation</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div>`;
+
+        // CHAT: Mock conversation
+        document.getElementById('chatMsgs').innerHTML=`<div class="msg msg-u"><div class="bbl"><div class="bbl-t">Refactor the auth module to use JWT tokens instead of sessions</div></div></div><div class="msg msg-a"><div class="bbl"><div class="msg-a-label"><div class="msg-a-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><span class="msg-a-name" style="color:var(--orange)">Agent #1</span><span class="msg-a-time">2m ago</span></div><div class="msg-txt">I'll refactor the auth module to use JWT. Here's my plan:</div><div style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:var(--bg-el);border-radius:8px;font-size:12px;color:var(--text-2)"><div style="display:flex;gap:6px;align-items:center"><i class="ri-checkbox-circle-line" style="color:var(--green);font-size:14px"></i><span style="text-decoration:line-through;color:var(--text-3)">1. Install jsonwebtoken package</span></div><div style="display:flex;gap:6px;align-items:center"><i class="ri-checkbox-circle-line" style="color:var(--green);font-size:14px"></i><span style="text-decoration:line-through;color:var(--text-3)">2. Create JWT utility functions</span></div><div style="display:flex;gap:6px;align-items:center"><i class="ri-loader-4-line spin-slow" style="color:var(--orange);font-size:14px"></i><span>3. Replace session middleware</span></div><div style="display:flex;gap:6px;align-items:center"><span style="color:var(--text-3);font-size:14px;width:14px;text-align:center">○</span><span style="color:var(--text-3)">4. Update login/register endpoints</span></div><div style="display:flex;gap:6px;align-items:center"><span style="color:var(--text-3);font-size:14px;width:14px;text-align:center">○</span><span style="color:var(--text-3)">5. Write tests</span></div></div></div></div><div class="msg msg-a"><div class="bbl"><div class="msg-a-label"><div class="msg-a-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><span class="msg-a-name" style="color:var(--orange)">Agent #1</span><span class="msg-a-time">1m ago</span></div><div class="msg-tool"><i class="ri-terminal-box-line" style="color:var(--orange)"></i><span class="msg-tool-name">npm install jsonwebtoken</span><i class="ri-check-line" style="color:var(--green)"></i></div><div class="msg-tool"><i class="ri-file-code-line" style="color:var(--orange)"></i><span class="msg-tool-name">Created src/utils/jwt.ts</span><i class="ri-check-line" style="color:var(--green)"></i></div><div class="msg-tool"><i class="ri-file-code-line" style="color:var(--orange)"></i><span class="msg-tool-name shimmer">Editing src/middleware/auth.ts</span><i class="ri-loader-4-line spin-slow" style="color:var(--orange)"></i></div><div class="msg-txt" style="color:var(--text-2)">Replacing session-based auth with JWT middleware. The token will be validated on each request.</div></div></div><div class="msg msg-u"><div class="bbl"><div class="bbl-t">How's the progress looking?</div></div></div><div class="msg msg-a"><div class="bbl"><div class="msg-a-label"><div class="msg-a-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><span class="msg-a-name" style="color:var(--orange)">Agent #1</span><span class="msg-a-time">just now</span></div><div class="msg-txt">Step 3 is in progress. Files changed so far:</div><div style="display:flex;flex-direction:column;gap:4px"><div class="msg-file"><i class="ri-file-code-line" style="color:var(--green)"></i><span class="msg-file-n" style="font-weight:500">src/utils/jwt.ts</span><span style="margin-left:auto;font-size:10px;color:var(--green)">+48 lines</span></div><div class="msg-file"><i class="ri-file-code-line" style="color:var(--orange)"></i><span class="msg-file-n shimmer" style="font-weight:500">src/middleware/auth.ts</span><span style="margin-left:auto;font-size:10px;color:var(--orange)">editing...</span></div><div class="msg-file"><i class="ri-file-text-line" style="color:var(--text-3)"></i><span class="msg-file-n" style="color:var(--text-3)">package.json</span><span style="margin-left:auto;font-size:10px;color:var(--text-3)">+1 dep</span></div></div></div></div>`;
+
+        // Make bento/drive clickable
+        document.querySelectorAll('.bento-lg,.bento-sm').forEach(c=>{c.style.cursor='pointer';c.onclick=()=>go('fl');});
+        document.querySelectorAll('.drv').forEach(d=>d.onclick=()=>go('fl'));
+        const pc=document.querySelector('.bento-lg');if(pc)pc.onclick=()=>go('project');
+        document.querySelector('.hero')?.addEventListener('click',e=>{if(!e.target.closest('.hero-new'))go('device');});
+        document.querySelectorAll('.set-row').forEach(r=>{if(r.querySelector('.set-row-t')?.textContent==='Projects')r.onclick=()=>go('project');});
+
+        document.getElementById('hubRelayDot').className='relay-dot ok';
+    }
+
+    // START
+    go('splash');
+    populateMock();
+    </script>
+</body>
+</html>
