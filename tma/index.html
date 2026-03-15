@@ -12,7 +12,7 @@
     <style>
         :root {
             --bg:#0C0C0C; --bg-card:#1A1A1A; --bg-el:#242424;
-            --border:#2A2A2A; --border-hero:#2A2A4A; --border-light:rgba(255,255,255,0.09);
+            --border:#2A2A2A; --border-hero:#2A2040; --border-light:rgba(255,255,255,0.09);
             --text:#FFF; --text-2:#8A8A8A; --text-3:#525252; --text-4:#3A3A3A;
             --orange:#FF9F1C; --purple:#7B6CDB; --green:#32D74B; --yellow:#FFB547;
             --pink:#E87CC5; --cyan:#4DC9F6; --coral:#FF6B6B; --lime:#A3E635;
@@ -94,13 +94,16 @@
         [style*="--lime)"] > i,[style*="--lime)"] > span,[style*="--lime)"] > div,
         .dark-content,.dark-content i,.dark-content span,.dark-content div{color:#0C0C0C!important}
         /* SHIMMER — running text effect for active tasks */
-        @keyframes float1{0%,100%{transform:rotate(30deg) translate(0,0)}50%{transform:rotate(35deg) translate(10px,-15px)}}
-        @keyframes float2{0%,100%{transform:rotate(50deg) translate(0,0)}50%{transform:rotate(45deg) translate(-8px,12px)}}
-        @keyframes float3{0%,100%{transform:scale(1);opacity:.07}50%{transform:scale(1.08);opacity:.1}}
-        @keyframes float4{0%,100%{transform:scale(1);opacity:.05}50%{transform:scale(1.05);opacity:.07}}
-        @keyframes float5{0%,100%{transform:rotate(65deg) translate(0,0)}50%{transform:rotate(60deg) translate(5px,-8px)}}
+        @keyframes drift1{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        @keyframes rock1{0%,100%{transform:rotate(20deg)}50%{transform:rotate(40deg)}}
+        @keyframes rock2{0%,100%{transform:rotate(130deg)}50%{transform:rotate(150deg)}}
+        @keyframes rock3{0%,100%{transform:rotate(200deg)}50%{transform:rotate(180deg)}}
+        @keyframes rock4{0%,100%{transform:rotate(50deg)}50%{transform:rotate(70deg)}}
+        @keyframes pulse1{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+        @keyframes pulse2{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
         @keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
         .shimmer{background:linear-gradient(90deg,var(--text-3) 0%,var(--text-2) 40%,var(--text) 50%,var(--text-2) 60%,var(--text-3) 100%);background-size:400px 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 2.5s ease-in-out infinite}
+        /* shimmer-card class kept for markup but no effect — text shimmer only */
         /* SCROLLBAR */
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-track{background:transparent}
@@ -122,7 +125,7 @@
         .relay-dot.ok{background:var(--green);box-shadow:0 0 8px var(--green-20)}
         .relay-dot.wait{background:var(--orange);animation:blink 1.2s ease-in-out infinite}
         .relay-txt{font-size:9px;font-weight:700;color:var(--text-3);letter-spacing:1px}
-        .hero{padding:20px 20px 16px;border-radius:16px;border:1px solid var(--border-hero);background:linear-gradient(160deg,#1A1A2E,#16213E 50%,#0F3460);box-shadow:0 8px 32px rgba(0,0,0,.4);position:relative;overflow:hidden}
+        .hero{padding:20px 20px 16px;border-radius:16px;border:1px solid var(--border-hero);background:#1A1528;box-shadow:0 8px 32px rgba(0,0,0,.4);position:relative;overflow:hidden}
         .hero::before{content:'';position:absolute;inset:0;background-image:url('topography.svg');background-size:300px;opacity:0.12;pointer-events:none;filter:invert(1);mix-blend-mode:soft-light}
         .hero-icon{width:48px;height:48px;background:var(--w10);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .hero-icon i{font-size:24px;color:#fff}
@@ -178,6 +181,13 @@
         .chat-bc .bc-a{color:var(--orange);font-weight:500}
         .chat-bc .bc-s{color:var(--text-4)}
         .chat-bc .bc-p{color:var(--text-2);font-weight:500}
+        .chat-tabs{display:flex;gap:6px;padding:8px 24px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
+        .chat-tabs::-webkit-scrollbar{display:none}
+        .chat-tab{display:flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid rgba(255,255,255,.06);border-radius:8px;cursor:pointer;flex-shrink:0;font-size:12px;font-weight:500;color:var(--text-3);transition:all .15s}
+        .chat-tab:active{background:var(--bg-el)}
+        .chat-tab.active{background:var(--bg-el);border-color:rgba(255,255,255,.1);color:var(--text)}
+        .chat-tab i{font-size:14px}
+        .chat-tab-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
         .chat-div{width:100%;height:1px;background:var(--bg-card);flex-shrink:0}
         .chat-msgs{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
         .chat-bar{display:flex;align-items:center;gap:10px;padding:10px 20px 28px;flex-shrink:0;position:relative;z-index:10}
@@ -195,7 +205,7 @@
         .send-btn:disabled{opacity:.3}
         .msg{display:flex;animation:fadein .15s ease-out}
         .msg-u{justify-content:flex-end}
-        .msg-u .bbl{padding:12px 16px;background:linear-gradient(135deg,#1A1A2E,#16213E);border-radius:16px 16px 4px 16px;border:1px solid var(--border-hero);max-width:85%}
+        .msg-u .bbl{padding:12px 16px;background:#1A1528;border-radius:16px 16px 4px 16px;border:1px solid rgba(123,108,219,.2);max-width:85%}
         .msg-u .bbl-t{font-size:14px;line-height:1.5}
         .msg-a .bbl{padding:14px 16px;background:var(--bg-card);border-radius:16px 16px 16px 4px;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;max-width:90%}
         .msg-a-label{display:flex;align-items:center;gap:6px}
@@ -213,29 +223,29 @@
         .msg-sys{text-align:center;padding:12px 0;font-size:13px;color:var(--text-3);font-style:italic}
 
         /* ====== SHEETS ====== */
-        .sh-ov{position:fixed;inset:0;background:var(--overlay);display:none;z-index:100}
+        .sh-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:100}
         .sh-ov.show{display:flex;align-items:flex-end}
-        .sh{width:100%;background:var(--bg);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;flex-direction:column;animation:modalin .25s ease-out;max-height:85vh}
-        .sh-handle{display:flex;justify-content:center;padding:12px 0 6px}
-        .sh-bar{width:36px;height:4px;background:var(--border);border-radius:2px}
-        .sh-hdr{display:flex;justify-content:space-between;align-items:center;padding:0 24px 14px}
-        .sh-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;letter-spacing:-0.5px}
-        .sh-close{width:30px;height:30px;background:var(--bg-card);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:var(--text-3)}
-        .sh-close i{font-size:16px}
-        .sh-div{width:100%;height:1px;background:var(--border)}
-        .sh-body{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
-        .pill-row{display:flex;gap:8px;padding:0 24px 16px}
-        .pill{flex:1;height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;cursor:pointer}
+        .sh{width:100%;background:var(--bg-card);border-radius:20px 20px 0 0;display:flex;flex-direction:column;animation:modalin .25s ease-out;max-height:80vh}
+        .sh-handle{display:flex;justify-content:center;padding:12px 0 8px}
+        .sh-bar{width:36px;height:4px;background:var(--bg-el);border-radius:2px}
+        .sh-hdr{display:flex;justify-content:space-between;align-items:center;padding:0 24px 16px}
+        .sh-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;letter-spacing:-0.3px}
+        .sh-close{width:28px;height:28px;background:var(--bg-el);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:var(--text-3)}
+        .sh-close i{font-size:14px}
+        .sh-div{width:100%;height:1px;background:rgba(255,255,255,.04)}
+        .sh-body{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+        .pill-row{display:flex;gap:8px;padding:0 24px 14px}
+        .pill{flex:1;height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--bg-el);border:none;border-radius:10px;cursor:pointer}
         .pill-t{font-size:12px;font-weight:600;flex:1}
         .pill-arr i{font-size:14px;color:var(--text-3)}
-        .proj-opt{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#141418;border:1px solid var(--border);border-radius:12px;cursor:pointer}
-        .proj-opt.sel{border-color:var(--orange-20)}
-        .proj-opt:active{background:var(--bg-card)}
-        .proj-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-        .proj-icon i{font-size:18px}
-        .proj-name{font-size:15px;font-weight:600}
-        .proj-meta{font-size:11px;color:var(--text-3)}
-        .proj-new{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 16px;background:var(--orange);border:1px solid var(--orange);border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;color:#0C0C0C}
+        .proj-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;background:transparent;border-radius:10px;cursor:pointer;transition:background .15s}
+        .proj-opt.sel{background:var(--bg-el)}
+        .proj-opt:active{background:var(--bg-el)}
+        .proj-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .proj-icon i{font-size:16px}
+        .proj-name{font-size:14px;font-weight:600}
+        .proj-meta{font-size:10px;color:var(--text-3);margin-top:1px}
+        .proj-new{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;background:var(--orange);border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#0C0C0C;margin-top:4px}
         .proj-new:active{opacity:.9}
 
         /* ====== FILES ====== */
@@ -317,14 +327,26 @@
 <body>
     <!-- SPLASH -->
     <div class="screen splash" id="splashScreen">
-        <svg class="splash-shape" style="top:-30px;left:-20px;width:200px;height:200px;animation:float1 8s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 8 C55 8 80 45 88 75 C90 82 84 92 76 92 L24 92 C16 92 10 82 12 75 C20 45 45 8 50 8 Z" fill="#FF9F1C" opacity="0.15"/></svg>
-        <div class="splash-shape" style="top:14%;right:10%;width:100px;height:100px;border-radius:50%;background:rgba(123,108,219,.18);animation:float3 6s ease-in-out infinite"></div>
-        <svg class="splash-shape" style="bottom:80px;right:-30px;width:140px;height:140px;animation:float2 10s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 8 C55 8 80 45 88 75 C90 82 84 92 76 92 L24 92 C16 92 10 82 12 75 C20 45 45 8 50 8 Z" fill="#FF9F1C" opacity="0.12"/></svg>
-        <div class="splash-shape" style="bottom:12%;left:-30px;width:150px;height:150px;border-radius:50%;background:rgba(123,108,219,.12);animation:float4 9s ease-in-out infinite"></div>
-        <div class="splash-shape" style="top:55%;left:8%;width:40px;height:40px;border-radius:50%;background:rgba(123,108,219,.14);animation:float5 7s ease-in-out infinite"></div>
-        <svg class="splash-shape" style="top:35%;right:-10px;width:70px;height:70px;animation:float5 7s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 8 C55 8 80 45 88 75 C90 82 84 92 76 92 L24 92 C16 92 10 82 12 75 C20 45 45 8 50 8 Z" fill="#FF9F1C" opacity="0.1"/></svg>
-        <div class="splash-shape" style="bottom:35%;right:15%;width:16px;height:16px;border-radius:50%;background:rgba(255,159,28,.2);animation:float3 5s ease-in-out infinite"></div>
-        <div class="splash-shape" style="top:20%;left:15%;width:10px;height:10px;border-radius:50%;background:rgba(123,108,219,.2);animation:float4 4s ease-in-out infinite"></div>
+        <!-- Whole composition slowly rotates -->
+        <div class="splash-shape" style="inset:0;animation:drift1 120s linear infinite">
+            <!-- ROUNDED TRIANGLES (orange) — proper bezier-curved corners -->
+            <svg class="splash-shape" style="top:0%;left:-8%;width:120px;height:120px;animation:rock1 12s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 12 Q55 12 80 68 Q84 75 78 80 L22 80 Q16 75 20 68 Q45 12 50 12 Z" fill="#FF9F1C" fill-opacity="0.14"/></svg>
+            <svg class="splash-shape" style="bottom:4%;right:0%;width:90px;height:90px;animation:rock2 14s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 12 Q55 12 80 68 Q84 75 78 80 L22 80 Q16 75 20 68 Q45 12 50 12 Z" fill="#FF9F1C" fill-opacity="0.11"/></svg>
+            <svg class="splash-shape" style="bottom:42%;right:0%;width:45px;height:45px;animation:rock3 10s ease-in-out infinite" viewBox="0 0 100 100"><path d="M50 12 Q55 12 80 68 Q84 75 78 80 L22 80 Q16 75 20 68 Q45 12 50 12 Z" fill="#FF9F1C" fill-opacity="0.09"/></svg>
+            <!-- CIRCLES (purple) — well separated from triangles -->
+            <div class="splash-shape" style="top:5%;right:5%;width:80px;height:80px;border-radius:50%;background:rgba(123,108,219,.14);animation:pulse1 8s ease-in-out infinite"></div>
+            <div class="splash-shape" style="bottom:12%;left:0%;width:95px;height:95px;border-radius:50%;background:rgba(123,108,219,.10);animation:pulse2 11s ease-in-out infinite"></div>
+            <div class="splash-shape" style="top:68%;left:5%;width:26px;height:26px;border-radius:50%;background:rgba(123,108,219,.13);animation:pulse1 6s ease-in-out infinite"></div>
+            <!-- ROUNDED SQUARES — far from other shapes -->
+            <div class="splash-shape" style="top:28%;right:5%;width:30px;height:30px;background:rgba(255,159,28,.10);border-radius:8px;animation:rock4 9s ease-in-out infinite"></div>
+            <div class="splash-shape" style="top:18%;left:25%;width:18px;height:18px;background:rgba(123,108,219,.12);border-radius:5px;animation:rock1 8s ease-in-out infinite"></div>
+            <div class="splash-shape" style="bottom:30%;left:15%;width:14px;height:14px;background:rgba(255,159,28,.12);border-radius:4px;animation:rock3 7s ease-in-out infinite"></div>
+            <!-- DOTS — in remaining empty zones -->
+            <div class="splash-shape" style="top:15%;left:50%;width:5px;height:5px;border-radius:50%;background:rgba(255,159,28,.18)"></div>
+            <div class="splash-shape" style="bottom:22%;right:30%;width:4px;height:4px;border-radius:50%;background:rgba(123,108,219,.16)"></div>
+            <div class="splash-shape" style="top:50%;left:40%;width:6px;height:6px;border-radius:50%;background:rgba(123,108,219,.14)"></div>
+        </div>
+        <!-- Content -->
         <div class="splash-logo">
             <img src="nanobots_tma_logo.png" alt="Nanobots">
             <div class="splash-tag">Multi-agent AI for your devices</div>
@@ -392,6 +414,7 @@
             <div class="chat-ctx" style="flex:1"><div class="chat-title">Chat</div><div class="chat-bc"><span id="chatBcDev">MacBook Pro</span><span class="bc-s">  ›  </span><span class="bc-a" id="chatBcAg">Agent #1</span><span class="bc-s">  ›  </span><span class="bc-p" id="chatBcPr">my-webapp</span></div></div>
             <button class="btn-icon" id="chatSwitch" style="border:1px solid var(--border)"><i class="ri-repeat-line" style="color:var(--text-2)"></i></button>
         </div>
+        <div class="chat-tabs" id="chatTabs"></div>
         <div class="chat-div"></div>
         <div class="chat-msgs" id="chatMsgs"><div class="msg-sys">Select a device to begin.</div></div>
         <div class="chat-bar">
@@ -421,7 +444,7 @@
                 <div class="sec-label">SYSTEM</div>
                 <div class="set-grp">
                     <div class="set-row"><i class="ri-wifi-line" style="color:var(--green)"></i><span class="set-row-t">Relay Connection</span><span class="set-row-v" style="color:var(--green)">Active</span></div>
-                    <div class="set-row"><i class="ri-cpu-line" style="color:var(--text-2)"></i><span class="set-row-t">AI Provider</span><span class="set-row-v" style="color:var(--text-2)">Anthropic</span></div>
+                    <div class="set-row"><i class="ri-cpu-line" style="color:var(--text-2)"></i><span class="set-row-t">AI Provider</span><span class="set-row-v" style="color:var(--text-2)"><i class="ri-quill-pen-ai-line" style="font-size:14px;margin-right:4px;vertical-align:middle"></i>Anthropic</span></div>
                     <div class="set-row"><i class="ri-information-line" style="color:var(--text-2)"></i><span class="set-row-t">About Nanobots</span><span class="set-row-c"><i class="ri-arrow-right-s-line"></i></span></div>
                 </div>
             </div>
@@ -431,6 +454,63 @@
             <button class="bnav-tab" data-nav="device"><i class="ri-macbook-line"></i><span>DEVICE</span></button>
             <button class="bnav-tab active" data-nav="more"><i class="ri-settings-3-line"></i><span>MORE</span></button>
         </div></div>
+    </div>
+
+    <!-- SCHEDULED TASKS -->
+    <div class="screen hidden" id="tasksScreen">
+        <div class="spacer"></div>
+        <div class="hdr">
+            <button class="hdr-back" id="tasksBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="hdr-title">Scheduled Tasks</div><div class="hdr-meta">MacBook Pro</div></div>
+        </div>
+        <div class="scroll" style="padding-left:24px;padding-right:24px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-time-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Daily backup</div><div class="act-desc">Every day at 02:00 · rsync ~/projects</div></div><div style="font-size:10px;color:var(--green);font-weight:600">ACTIVE</div></div>
+                <div class="act-item"><div class="act-icon" style="background:var(--purple-12)"><i class="ri-time-line" style="color:var(--purple)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Run tests</div><div class="act-desc">Every 6 hours · pytest my-webapp</div></div><div style="font-size:10px;color:var(--green);font-weight:600">ACTIVE</div></div>
+                <div class="act-item"><div class="act-icon" style="background:var(--w08)"><i class="ri-time-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Check disk space</div><div class="act-desc">Weekly on Monday · df -h</div></div><div style="font-size:10px;color:var(--text-3);font-weight:600">PAUSED</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AGENT MEMORY -->
+    <div class="screen hidden" id="memoryScreen">
+        <div class="spacer"></div>
+        <div class="hdr">
+            <button class="hdr-back" id="memoryBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="hdr-title">Agent Memory</div><div class="hdr-meta">MacBook Pro · Long-term knowledge</div></div>
+        </div>
+        <div class="scroll" style="padding-left:24px;padding-right:24px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <div class="sec-label">REMEMBERED</div>
+                <div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-sparkling-2-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">User prefers TypeScript</div><div class="act-desc">Learned from Agent #1 · my-webapp</div></div><div class="act-time">2d</div></div>
+                <div class="act-item"><div class="act-icon" style="background:var(--purple-12)"><i class="ri-sparkling-2-line" style="color:var(--purple)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">API uses REST, not GraphQL</div><div class="act-desc">Learned from Agent #2 · api-server</div></div><div class="act-time">5d</div></div>
+                <div class="act-item"><div class="act-icon" style="background:var(--green-15)"><i class="ri-sparkling-2-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Deploy target: Vercel</div><div class="act-desc">Learned from Agent #1 · my-webapp</div></div><div class="act-time">1w</div></div>
+                <div class="act-item"><div class="act-icon" style="background:var(--w08)"><i class="ri-sparkling-2-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Database: PostgreSQL on Supabase</div><div class="act-desc">Learned from Agent #2 · api-server</div></div><div class="act-time">2w</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="screen hidden" id="aboutScreen">
+        <div class="spacer"></div>
+        <div class="hdr">
+            <button class="hdr-back" id="aboutBack"><i class="ri-arrow-left-s-line"></i></button>
+            <div style="flex:1"><div class="hdr-title">About</div></div>
+        </div>
+        <div class="scroll" style="padding-left:24px;padding-right:24px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:20px;padding:40px 0">
+                <img src="nanobots_tma_logo.png" alt="Nanobots" style="height:48px">
+                <div style="text-align:center"><div class="sora" style="font-size:18px;font-weight:700">Nanobots</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">Multi-agent AI for your devices</div></div>
+                <div style="font-size:11px;color:var(--text-3)">Version 2.0.0</div>
+                <div style="width:100%;display:flex;flex-direction:column;gap:6px;margin-top:12px">
+                    <div class="set-grp">
+                        <div class="set-row"><i class="ri-github-line" style="color:var(--text)"></i><span class="set-row-t">GitHub</span><span class="set-row-c"><i class="ri-arrow-right-s-line"></i></span></div>
+                        <div class="set-row"><i class="ri-file-text-line" style="color:var(--text-2)"></i><span class="set-row-t">License</span><span class="set-row-v" style="color:var(--text-3)">MIT</span></div>
+                        <div class="set-row"><i class="ri-heart-line" style="color:var(--coral)"></i><span class="set-row-t">Made with Claude</span><span class="set-row-v" style="color:var(--text-3)">Opus 4.6</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- FILE LIST -->
@@ -457,15 +537,16 @@
             <button class="btn-icon" id="projHistory" style="border:1px solid var(--border)"><i class="ri-history-line" style="color:var(--text-2)"></i></button>
         </div>
         <div class="ag-chips" id="projAgentChips"></div>
+        <div style="width:100%;height:1px;background:rgba(255,255,255,.04);flex-shrink:0;margin-top:12px"></div>
         <div class="scroll" style="padding-left:24px;padding-right:24px;padding-top:16px">
             <div style="display:flex;flex-direction:column;gap:16px">
                 <div class="sec-label" style="color:var(--text)">KEY FILES</div>
                 <div style="display:flex;flex-direction:column;gap:6px" id="projKeyFiles"></div>
                 <div class="sec-label">FILES</div>
                 <div style="display:flex;flex-direction:column;gap:2px" id="projFiles"></div>
-                <div class="browse-all" id="projBrowseAll"><i class="ri-folder-open-line"></i><span>Browse all 24 files</span><i class="ri-arrow-right-s-line"></i></div>
             </div>
         </div>
+        <div style="padding:8px 24px 24px;flex-shrink:0;position:relative;z-index:10"><div class="browse-all" id="projBrowseAll"><i class="ri-folder-open-line"></i><span>Browse all 24 files</span><i class="ri-arrow-right-s-line"></i></div></div>
     </div>
 
     <!-- SWITCH CONTEXT SHEET -->
@@ -513,7 +594,7 @@
     }
 
     // NAV
-    const S={splash:'splashScreen',hub:'hubScreen',device:'deviceScreen',chat:'chatScreen',more:'moreScreen',fl:'fileListScreen',project:'projectScreen'};
+    const S={splash:'splashScreen',hub:'hubScreen',device:'deviceScreen',chat:'chatScreen',more:'moreScreen',fl:'fileListScreen',project:'projectScreen',tasks:'tasksScreen',memory:'memoryScreen',about:'aboutScreen'};
     function go(n){Object.values(S).forEach(id=>document.getElementById(id).classList.add('hidden'));document.getElementById(S[n]).classList.remove('hidden');}
 
     document.getElementById('splashStart').onclick=()=>go('hub');
@@ -522,6 +603,9 @@
     document.getElementById('moreBack').onclick=()=>go('hub');
     document.getElementById('flBack').onclick=()=>go('device');
     document.getElementById('projBack').onclick=()=>go('device');
+    document.getElementById('tasksBack').onclick=()=>go('more');
+    document.getElementById('memoryBack').onclick=()=>go('more');
+    document.getElementById('aboutBack').onclick=()=>go('more');
     document.getElementById('projHistory').onclick=()=>document.getElementById('rcSheet').classList.add('show');
     document.getElementById('projBrowseAll').onclick=()=>go('fl');
 
@@ -563,7 +647,7 @@
     // ===== MOCK DATA =====
     function populateMock(){
         // HUB: Hero card
-        document.getElementById('hubHeroWrap').innerHTML=`<div class="hero" style="display:flex;flex-direction:column;gap:14px;cursor:pointer" onclick="go('device')"><div style="display:flex;justify-content:space-between;align-items:start"><div style="display:flex;flex-direction:column;gap:4px"><div class="badge badge-sm" style="background:var(--green-20);color:var(--green);align-self:start"><div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div> ONLINE</div><div class="sora" style="font-size:22px;font-weight:700;letter-spacing:-0.5px">MacBook Pro</div><div style="font-size:12px;color:var(--text-2)">macOS · Apple M2 · 8h uptime</div></div><div class="hero-icon"><i class="ri-macbook-line"></i></div></div><div class="hero-div"></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:11px;font-weight:600;color:var(--w60)">3 agents running</div><button class="hero-new"><i class="ri-add-line"></i> New</button></div><div style="display:flex;flex-direction:column;gap:6px"><div class="hero-ag"><div class="hero-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #1 · my-webapp</div><div class="hero-agent-task shimmer">Refactoring auth module...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div></div><div class="hero-ag"><div class="hero-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #2 · api-server</div><div class="hero-agent-task">Waiting for input</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div></div><div class="hero-ag"><div class="hero-av dark-content" style="background:var(--yellow);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #3 · ml-pipeline</div><div class="hero-agent-task shimmer">Training model...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div></div></div></div>`;
+        document.getElementById('hubHeroWrap').innerHTML=`<div class="hero" style="display:flex;flex-direction:column;gap:14px;cursor:pointer" onclick="go('device')"><div style="display:flex;justify-content:space-between;align-items:start"><div style="display:flex;flex-direction:column;gap:4px"><div class="badge badge-sm" style="background:var(--green-20);color:var(--green);align-self:start"><div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div> ONLINE</div><div class="sora" style="font-size:22px;font-weight:700;letter-spacing:-0.5px">MacBook Pro</div><div style="font-size:12px;color:var(--text-2)">macOS · Apple M2 · 8h uptime</div></div><div class="hero-icon"><i class="ri-macbook-line"></i></div></div><div class="hero-div"></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:11px;font-weight:600;color:var(--w60)">3 agents running</div><button class="hero-new"><i class="ri-add-line"></i> New</button></div><div style="display:flex;flex-direction:column;gap:6px"><div class="hero-ag shimmer-card"><div class="hero-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #1 · my-webapp</div><div class="hero-agent-task shimmer">Refactoring auth module...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div></div><div class="hero-ag"><div class="hero-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #2 · api-server</div><div class="hero-agent-task">Waiting for input</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div></div><div class="hero-ag shimmer-card"><div class="hero-av dark-content" style="background:var(--yellow);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;min-width:0"><div class="hero-agent-name">Agent #3 · ml-pipeline</div><div class="hero-agent-task shimmer">Training model...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div></div></div></div>`;
 
         // HUB: Other devices
         document.getElementById('hubOtherDevices').innerHTML=`<div class="mini"><div class="mini-top"><div class="mini-icon"><i class="ri-computer-line"></i></div><div style="width:8px;height:8px;border-radius:50%;background:var(--border)"></div></div><div class="mini-name">Desktop PC</div><div class="mini-meta">Windows · 2h ago</div></div><div class="mini"><div class="mini-top"><div class="mini-icon"><i class="ri-computer-line"></i></div><div style="width:8px;height:8px;border-radius:50%;background:var(--border)"></div></div><div class="mini-name">Work Laptop</div><div class="mini-meta">Linux · 5d ago</div></div>`;
@@ -572,7 +656,7 @@
         document.getElementById('hubActList').innerHTML=`<div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-loader-4-line spin-slow" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Running tests</div><div class="act-desc">Agent #1 · my-webapp · pytest</div></div><div class="act-time" style="color:var(--orange)">now</div></div><div class="act-item"><div class="act-icon" style="background:var(--green-15)"><i class="ri-check-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Deploy completed</div><div class="act-desc">Agent #1 · my-webapp · npm run build</div></div><div class="act-time">5m</div></div><div class="act-item"><div class="act-icon" style="background:var(--green-15)"><i class="ri-check-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Fixed login bug #42</div><div class="act-desc">Agent #2 · api-server · 3 files changed</div></div><div class="act-time">18m</div></div><div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-loader-4-line spin-slow" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><div class="act-title">Training model epoch 4/10</div><div class="act-desc">Agent #3 · ml-pipeline · GPU 87%</div></div><div class="act-time" style="color:var(--orange)">now</div></div>`;
 
         // DEVICE: Agents
-        document.getElementById('devAgents').innerHTML=`<div class="ag-row" onclick="go('chat')"><div class="ag-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="ag-name">Agent #1 · my-webapp</div><div class="ag-task shimmer">Refactoring auth module...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="ag-row" onclick="go('chat')"><div class="ag-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="ag-name">Agent #2 · api-server</div><div class="ag-task">Waiting for input</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div>`;
+        document.getElementById('devAgents').innerHTML=`<div class="ag-row shimmer-card" onclick="go('chat')"><div class="ag-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="ag-name">Agent #1 · my-webapp</div><div class="ag-task shimmer">Refactoring auth module...</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 6px var(--orange)"></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="ag-row" onclick="go('chat')"><div class="ag-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="ag-name">Agent #2 · api-server</div><div class="ag-task">Waiting for input</div></div><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div>`;
 
         // DEVICE: Files bento
         document.getElementById('devFiles').innerHTML=`<div style="display:flex;gap:10px;grid-column:1/-1"><div class="bento-lg" style="width:50%"><i class="ri-layout-grid-line" style="color:var(--orange)"></i><div style="display:flex;flex-direction:column;gap:3px"><div class="bn">Projects</div><div class="bm">6 items · 890 MB</div></div></div><div style="display:flex;flex-direction:column;gap:10px;width:50%"><div class="bento-sm"><i class="ri-computer-line" style="color:var(--coral)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Desktop</div><div class="bm">12 · 2.4 GB</div></div></div><div class="bento-sm"><i class="ri-file-text-line" style="color:var(--purple)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Documents</div><div class="bm">48 · 12.8 GB</div></div></div></div></div><div style="display:flex;gap:10px;grid-column:1/-1"><div class="bento-sm" style="flex:1"><i class="ri-download-2-line" style="color:var(--green)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Downloads</div><div class="bm">23 · 5.1 GB</div></div></div><div class="bento-sm" style="flex:1"><i class="ri-sparkling-2-line" style="color:var(--cyan)"></i><div style="display:flex;flex-direction:column;gap:2px"><div class="bn">Skills</div><div class="bm">8 skills</div></div></div></div>`;
@@ -590,13 +674,16 @@
         document.getElementById('rcList').innerHTML=`<div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-file-code-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">src/auth.ts</div><div class="act-desc">Agent #1 · Frontend · Modified</div></div><div class="act-time" style="color:var(--orange)">2m</div></div><div class="act-item"><div class="act-icon" style="background:var(--orange-20)"><i class="ri-file-code-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">src/components/Login.tsx</div><div class="act-desc">Agent #1 · Frontend · Created</div></div><div class="act-time">5m</div></div><div class="act-item"><div class="act-icon" style="background:var(--purple-12)"><i class="ri-file-code-line" style="color:var(--purple)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">tests/auth.test.ts</div><div class="act-desc">Agent #3 · Testing · Modified</div></div><div class="act-time">8m</div></div><div class="act-item"><div class="act-icon" style="background:var(--yellow-12)"><i class="ri-file-code-line" style="color:var(--yellow)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">src/api/routes.ts</div><div class="act-desc">Agent #5 · Backend · Modified</div></div><div class="act-time">12m</div></div><div class="act-item"><div class="act-icon" style="background:var(--green-15)"><i class="ri-file-text-line" style="color:var(--green)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="act-title">ARCHITECTURE.md</div><div class="act-desc">Agent #1 · Frontend · Updated</div></div><div class="act-time">18m</div></div>`;
 
         // PROJECT: Agent chips
-        document.getElementById('projAgentChips').innerHTML=`<div class="ag-chip" style="border-color:var(--orange-20)" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 4px var(--orange)"></div></div><div class="ag-chip-name">Agent #1</div><div class="ag-chip-role" style="color:var(--orange)">Frontend</div><div class="ag-chip-task shimmer">Editing auth UI...</div></div><div class="ag-chip" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div></div><div class="ag-chip-name">Agent #3</div><div class="ag-chip-role" style="color:var(--purple)">Testing</div><div class="ag-chip-task">Writing unit tests</div></div><div class="ag-chip" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av dark-content" style="background:var(--yellow);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 4px var(--orange)"></div></div><div class="ag-chip-name">Agent #5</div><div class="ag-chip-role" style="color:var(--yellow)">Backend</div><div class="ag-chip-task shimmer">API endpoints...</div></div>`;
+        document.getElementById('projAgentChips').innerHTML=`<div class="ag-chip shimmer-card" style="border-color:var(--orange-20)" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 4px var(--orange)"></div></div><div class="ag-chip-name">Agent #1</div><div class="ag-chip-role" style="color:var(--orange)">Frontend</div><div class="ag-chip-task shimmer">Editing auth UI...</div></div><div class="ag-chip" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av" style="background:var(--purple)"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div></div><div class="ag-chip-name">Agent #3</div><div class="ag-chip-role" style="color:var(--purple)">Testing</div><div class="ag-chip-task">Writing unit tests</div></div><div class="ag-chip shimmer-card" onclick="go('chat')"><div class="ag-chip-top"><div class="ag-chip-av dark-content" style="background:var(--yellow);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 4px var(--orange)"></div></div><div class="ag-chip-name">Agent #5</div><div class="ag-chip-role" style="color:var(--yellow)">Backend</div><div class="ag-chip-task shimmer">API endpoints...</div></div>`;
 
         // PROJECT: Key files
         document.getElementById('projKeyFiles').innerHTML=`<div class="key-row"><div class="f-icon" style="background:var(--orange-20)"><i class="ri-file-text-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="f-name">ARCHITECTURE.md</div><div class="f-meta">Shared context · 4.2 KB</div></div><div class="f-ags"><div class="f-ag-c" style="background:var(--orange);color:#0C0C0C">1</div><div class="f-ag-c" style="background:var(--purple)">3</div></div></div><div class="key-row"><div class="f-icon" style="background:var(--yellow-12)"><i class="ri-file-code-line" style="color:var(--yellow)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:1px"><div class="f-name">.env</div><div class="f-meta">Config · 312 B</div></div></div>`;
 
         // PROJECT: Regular files
         document.getElementById('projFiles').innerHTML=`<div class="f-row"><div class="f-icon" style="background:var(--orange-20)"><i class="ri-folder-line" style="color:var(--orange)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">src/</div><div class="f-meta">Source code</div></div><div class="f-ag" style="background:var(--orange);color:#0C0C0C">1</div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--purple-12)"><i class="ri-folder-line" style="color:var(--purple)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">tests/</div><div class="f-meta">Test files</div></div><div class="f-ag" style="background:var(--purple)">3</div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--w08)"><i class="ri-file-code-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">package.json</div><div class="f-meta">Config</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div><div class="f-row"><div class="f-icon" style="background:var(--w08)"><i class="ri-file-text-line" style="color:var(--text-3)"></i></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div class="f-name">README.md</div><div class="f-meta">Documentation</div></div><i class="ri-arrow-right-s-line" style="color:var(--border)"></i></div>`;
+
+        // CHAT: Project tabs
+        document.getElementById('chatTabs').innerHTML=`<div class="chat-tab active"><div style="width:18px;height:18px;border-radius:5px;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#0C0C0C"><i class="ri-ai-agent-line" style="font-size:11px"></i></div><span>Agent #1</span><div class="chat-tab-dot" style="background:var(--orange)"></div></div><div class="chat-tab"><div style="width:18px;height:18px;border-radius:5px;background:var(--purple);display:flex;align-items:center;justify-content:center"><i class="ri-ai-agent-line" style="font-size:11px;color:#fff"></i></div><span>Agent #2</span><div class="chat-tab-dot" style="background:var(--green)"></div></div><div class="chat-tab"><div style="width:18px;height:18px;border-radius:5px;background:var(--yellow);display:flex;align-items:center;justify-content:center;color:#0C0C0C"><i class="ri-ai-agent-line" style="font-size:11px"></i></div><span>Agent #5</span><div class="chat-tab-dot" style="background:var(--orange)"></div></div>`;
 
         // CHAT: Mock conversation
         document.getElementById('chatMsgs').innerHTML=`<div class="msg msg-u"><div class="bbl"><div class="bbl-t">Refactor the auth module to use JWT tokens instead of sessions</div></div></div><div class="msg msg-a"><div class="bbl"><div class="msg-a-label"><div class="msg-a-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><span class="msg-a-name" style="color:var(--orange)">Agent #1</span><span class="msg-a-time">2m ago</span></div><div class="msg-txt">I'll refactor the auth module to use JWT. Here's my plan:</div><div style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:var(--bg-el);border-radius:8px;font-size:12px;color:var(--text-2)"><div style="display:flex;gap:6px;align-items:center"><i class="ri-checkbox-circle-line" style="color:var(--green);font-size:14px"></i><span style="text-decoration:line-through;color:var(--text-3)">1. Install jsonwebtoken package</span></div><div style="display:flex;gap:6px;align-items:center"><i class="ri-checkbox-circle-line" style="color:var(--green);font-size:14px"></i><span style="text-decoration:line-through;color:var(--text-3)">2. Create JWT utility functions</span></div><div style="display:flex;gap:6px;align-items:center"><i class="ri-loader-4-line spin-slow" style="color:var(--orange);font-size:14px"></i><span>3. Replace session middleware</span></div><div style="display:flex;gap:6px;align-items:center"><span style="color:var(--text-3);font-size:14px;width:14px;text-align:center">○</span><span style="color:var(--text-3)">4. Update login/register endpoints</span></div><div style="display:flex;gap:6px;align-items:center"><span style="color:var(--text-3);font-size:14px;width:14px;text-align:center">○</span><span style="color:var(--text-3)">5. Write tests</span></div></div></div></div><div class="msg msg-a"><div class="bbl"><div class="msg-a-label"><div class="msg-a-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><span class="msg-a-name" style="color:var(--orange)">Agent #1</span><span class="msg-a-time">1m ago</span></div><div class="msg-tool"><i class="ri-terminal-box-line" style="color:var(--orange)"></i><span class="msg-tool-name">npm install jsonwebtoken</span><i class="ri-check-line" style="color:var(--green)"></i></div><div class="msg-tool"><i class="ri-file-code-line" style="color:var(--orange)"></i><span class="msg-tool-name">Created src/utils/jwt.ts</span><i class="ri-check-line" style="color:var(--green)"></i></div><div class="msg-tool"><i class="ri-file-code-line" style="color:var(--orange)"></i><span class="msg-tool-name shimmer">Editing src/middleware/auth.ts</span><i class="ri-loader-4-line spin-slow" style="color:var(--orange)"></i></div><div class="msg-txt" style="color:var(--text-2)">Replacing session-based auth with JWT middleware. The token will be validated on each request.</div></div></div><div class="msg msg-u"><div class="bbl"><div class="bbl-t">How's the progress looking?</div></div></div><div class="msg msg-a"><div class="bbl"><div class="msg-a-label"><div class="msg-a-av" style="background:var(--orange);color:#0C0C0C"><i class="ri-ai-agent-line"></i></div><span class="msg-a-name" style="color:var(--orange)">Agent #1</span><span class="msg-a-time">just now</span></div><div class="msg-txt">Step 3 is in progress. Files changed so far:</div><div style="display:flex;flex-direction:column;gap:4px"><div class="msg-file"><i class="ri-file-code-line" style="color:var(--green)"></i><span class="msg-file-n" style="font-weight:500">src/utils/jwt.ts</span><span style="margin-left:auto;font-size:10px;color:var(--green)">+48 lines</span></div><div class="msg-file"><i class="ri-file-code-line" style="color:var(--orange)"></i><span class="msg-file-n shimmer" style="font-weight:500">src/middleware/auth.ts</span><span style="margin-left:auto;font-size:10px;color:var(--orange)">editing...</span></div><div class="msg-file"><i class="ri-file-text-line" style="color:var(--text-3)"></i><span class="msg-file-n" style="color:var(--text-3)">package.json</span><span style="margin-left:auto;font-size:10px;color:var(--text-3)">+1 dep</span></div></div></div></div>`;
@@ -606,7 +693,13 @@
         document.querySelectorAll('.drv').forEach(d=>d.onclick=()=>go('fl'));
         const pc=document.querySelector('.bento-lg');if(pc)pc.onclick=()=>go('project');
         document.querySelector('.hero')?.addEventListener('click',e=>{if(!e.target.closest('.hero-new'))go('device');});
-        document.querySelectorAll('.set-row').forEach(r=>{if(r.querySelector('.set-row-t')?.textContent==='Projects')r.onclick=()=>go('project');});
+        document.querySelectorAll('.set-row').forEach(r=>{
+            const t=r.querySelector('.set-row-t')?.textContent;
+            if(t==='Projects')r.onclick=()=>go('project');
+            if(t==='Scheduled Tasks')r.onclick=()=>go('tasks');
+            if(t==='Agent Memory')r.onclick=()=>go('memory');
+            if(t==='About Nanobots')r.onclick=()=>go('about');
+        });
 
         document.getElementById('hubRelayDot').className='relay-dot ok';
     }
@@ -614,6 +707,9 @@
     // START
     go('splash');
     populateMock();
+    // Scroll chat to bottom
+    const chatMsgs=document.getElementById('chatMsgs');
+    if(chatMsgs)chatMsgs.scrollTop=chatMsgs.scrollHeight;
     </script>
 </body>
 </html>
