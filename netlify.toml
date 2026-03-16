@@ -1,0 +1,9 @@
+[build]
+  publish = "tma"
+  command = "echo 'No build needed'"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "ALLOWALL"
+    Content-Security-Policy = "frame-ancestors *"
